@@ -92,13 +92,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             className={`${sidebarOpen ? 'w-56' : 'w-16'} transition-all duration-200 ease-out flex flex-col glass-sidebar relative z-30`}
           >
             {/* Sidebar Logo — symbol only, theme-aware */}
-            <div className="border-b border-[--border-base] flex items-center justify-center h-[60px]">
+            <div className="border-b border-[--border-base] flex items-center justify-center h-[72px] px-2">
               <Image
                 src={theme === 'dark' ? '/ept-logo-dark.png' : '/ept-logo-light.png'}
                 alt="EPT"
-                width={44}
-                height={44}
-                className="shrink-0 object-contain"
+                width={120}
+                height={60}
+                className="shrink-0 object-contain h-[52px] w-auto"
               />
             </div>
 
@@ -144,7 +144,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* Main Content */}
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Top Bar */}
-            <header className="h-14 glass-topbar flex items-center justify-between px-6 relative">
+            <header className="h-16 glass-topbar flex items-center justify-between px-6 relative">
               {/* Left — page title + live dot */}
               <div className="flex items-center gap-4 z-10">
                 <h1 className="font-orbitron text-xs text-[--text-48] tracking-[0.15em] uppercase">
@@ -161,9 +161,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <Image
                   src={theme === 'dark' ? '/ept-logo-dark.png' : '/ept-logo-light.png'}
                   alt="Echo Prime Technologies"
-                  width={260}
-                  height={48}
-                  className="h-9 w-auto object-contain"
+                  width={400}
+                  height={80}
+                  className="h-12 w-auto object-contain"
                   priority
                 />
               </div>
