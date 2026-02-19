@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { initializeApp, getApps } from 'firebase/app';
@@ -35,10 +36,36 @@ function NavIcon({ d, className = 'w-5 h-5' }: { d: string; className?: string }
   );
 }
 
+function useTheme() {
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const apply = (dark: boolean) => {
+      const t = dark ? 'dark' : 'light';
+      setTheme(t);
+      document.documentElement.classList.toggle('dark', dark);
+    };
+    apply(mq.matches);
+    const handler = (e: MediaQueryListEvent) => apply(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  const toggle = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    document.documentElement.classList.toggle('dark', next === 'dark');
+  };
+
+  return { theme, toggle };
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { theme, toggle: toggleTheme } = useTheme();
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
@@ -49,7 +76,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   }, []);
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <title>BillyMC - AI Sales Platform</title>
         <meta name="description" content="AI-Powered Insurance Sales Development Rep Platform" />
@@ -60,21 +87,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* Sidebar */}
           <aside className={`${sidebarOpen ? 'w-56' : 'w-16'} transition-all duration-300 flex flex-col glass-sidebar`}>
             {/* Logo */}
-            <div className="p-4 border-b border-white/[0.06] flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-400 flex items-center justify-center font-bold text-white text-sm shrink-0 shadow-lg shadow-blue-500/20">
-                B
-              </div>
+            <div className="p-4 border-b border-[--border-base] flex items-center gap-3">
+              <Image
+                src="/ept-logo.png"
+                alt="Echo Prime Technologies"
+                width={36}
+                height={36}
+                className="shrink-0 rounded-lg"
+              />
               {sidebarOpen && (
                 <div className="animate-fadeIn">
-                  <span className="font-orbitron text-sm text-white/90 tracking-wider">BillyMC</span>
-                  <p className="text-[9px] text-white/20 tracking-widest uppercase">AI Sales Platform</p>
+                  <span className="font-orbitron text-sm text-[--text-100] tracking-wider">BillyMC</span>
+                  <p className="text-[9px] text-[--text-24] tracking-widest uppercase">AI Sales Platform</p>
                 </div>
               )}
             </div>
 
             {/* Nav */}
             <nav className="flex-1 py-3 overflow-y-auto">
-              {NAV_ITEMS.map((item, i) => {
+              {NAV_ITEMS.map((item) => {
                 const active = item.exact ? pathname === item.href : (item.href === '/' ? pathname === '/' : pathname.startsWith(item.href));
                 return (
                   <Link
@@ -83,20 +114,36 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     className={`flex items-center gap-3 px-3 py-2.5 mx-2 my-0.5 rounded-xl text-sm transition-all duration-150 ${
                       active
                         ? 'nav-active font-medium'
-                        : 'nav-item text-white/40 hover:text-white/90'
+                        : 'nav-item text-[--text-48] hover:text-[--text-100]'
                     }`}
                   >
-                    <NavIcon d={item.icon} className={`w-[18px] h-[18px] shrink-0 ${active ? 'text-blue-400' : ''}`} />
+                    <NavIcon d={item.icon} className={`w-[18px] h-[18px] shrink-0 ${active ? 'text-blue-500 dark:text-blue-400' : ''}`} />
                     {sidebarOpen && <span className="truncate">{item.label}</span>}
                   </Link>
                 );
               })}
             </nav>
 
+            {/* Powered by EPT Footer */}
+            <div className="powered-footer">
+              {sidebarOpen ? (
+                <div className="flex flex-col items-center gap-1">
+                  <p className="text-[9px] text-[--text-24] uppercase tracking-[0.12em]">Powered by</p>
+                  <p className="chromatic-text text-[11px] font-orbitron font-semibold tracking-wider">
+                    ECHO PRIME TECHNOLOGIES
+                  </p>
+                </div>
+              ) : (
+                <div className="flex justify-center" title="Powered by Echo Prime Technologies">
+                  <Image src="/ept-logo.png" alt="EPT" width={20} height={20} className="opacity-40" />
+                </div>
+              )}
+            </div>
+
             {/* Collapse toggle */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-4 border-t border-white/[0.06] text-white/20 hover:text-white/60 transition-colors"
+              className="p-4 border-t border-[--border-base] text-[--text-24] hover:text-[--text-72] transition-colors"
             >
               <svg className={`w-4 h-4 transition-transform duration-300 ${sidebarOpen ? '' : 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
@@ -109,19 +156,31 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {/* Top Bar */}
             <header className="h-14 glass-topbar flex items-center justify-between px-6">
               <div className="flex items-center gap-4">
-                <h1 className="font-orbitron text-xs text-white/50 tracking-[0.15em] uppercase">
+                <h1 className="font-orbitron text-xs text-[--text-48] tracking-[0.15em] uppercase">
                   {NAV_ITEMS.find(n => n.exact ? pathname === n.href : (n.href === '/' ? pathname === '/' : pathname.startsWith(n.href)))?.label || 'BillyMC'}
                 </h1>
                 <div className="flex items-center gap-2">
                   <div className="live-dot" />
-                  <span className="text-[10px] font-medium text-emerald-400/80 tracking-wider uppercase">Live</span>
+                  <span className="text-[10px] font-medium text-emerald-500 dark:text-emerald-400/80 tracking-wider uppercase">Live</span>
                 </div>
               </div>
               <div className="flex items-center gap-3">
+                {/* Theme Toggle */}
+                <button onClick={toggleTheme} className="w-8 h-8 rounded-lg flex items-center justify-center text-[--text-48] hover:text-[--text-100] hover:bg-[--glass-bg-hover] transition-all" title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
+                  {theme === 'dark' ? (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                    </svg>
+                  )}
+                </button>
                 {user && (
                   <>
-                    <span className="text-[11px] text-white/25 font-mono">{user.email}</span>
-                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500/80 to-purple-600/80 flex items-center justify-center text-white text-[10px] font-bold border border-white/10">
+                    <span className="text-[11px] text-[--text-24] font-mono">{user.email}</span>
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500/80 to-purple-600/80 flex items-center justify-center text-white text-[10px] font-bold border border-[--border-interactive]">
                       {user.email?.[0]?.toUpperCase() || 'B'}
                     </div>
                   </>
