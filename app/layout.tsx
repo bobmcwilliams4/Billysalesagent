@@ -91,13 +91,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             onMouseLeave={() => setSidebarOpen(false)}
             className={`${sidebarOpen ? 'w-56' : 'w-16'} transition-all duration-200 ease-out flex flex-col glass-sidebar relative z-30`}
           >
-            {/* Sidebar Logo — theme-aware */}
-            <div className="border-b border-[--border-base] flex items-center justify-center h-[80px] overflow-hidden">
+            {/* Sidebar Logo — hex symbol only, theme-aware */}
+            <div className="border-b border-[--border-base] flex items-center justify-center h-[72px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={theme === 'dark' ? '/ept-logo-dark.png' : '/ept-logo-light.png'}
+                src={theme === 'dark' ? '/ept-sym-dark.png' : '/ept-sym-light.png'}
                 alt="EPT"
-                style={{ height: '60px', width: 'auto', maxWidth: 'none' }}
+                style={{ height: '48px', width: '48px', objectFit: 'contain' }}
               />
             </div>
 
@@ -134,7 +134,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </div>
               ) : (
                 <div className="flex justify-center" title="Powered by Echo Prime Technologies">
-                  <Image src={theme === 'dark' ? '/ept-logo-dark.png' : '/ept-logo-light.png'} alt="EPT" width={22} height={22} className="opacity-40 object-contain" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={theme === 'dark' ? '/ept-sym-dark.png' : '/ept-sym-light.png'} alt="EPT" style={{ height: '22px', width: '22px', objectFit: 'contain', opacity: 0.4 }} />
                 </div>
               )}
             </div>
