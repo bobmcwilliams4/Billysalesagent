@@ -91,14 +91,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             onMouseLeave={() => setSidebarOpen(false)}
             className={`${sidebarOpen ? 'w-56' : 'w-16'} transition-all duration-200 ease-out flex flex-col glass-sidebar relative z-30`}
           >
-            {/* Sidebar Logo — symbol only */}
+            {/* Sidebar Logo — symbol only, theme-aware */}
             <div className="border-b border-[--border-base] flex items-center justify-center h-[60px]">
               <Image
-                src="/ept-logo.png"
+                src={theme === 'dark' ? '/ept-logo-dark.png' : '/ept-logo-light.png'}
                 alt="EPT"
-                width={40}
-                height={40}
-                className="shrink-0 rounded-xl"
+                width={44}
+                height={44}
+                className="shrink-0 object-contain"
               />
             </div>
 
@@ -135,7 +135,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </div>
               ) : (
                 <div className="flex justify-center" title="Powered by Echo Prime Technologies">
-                  <Image src="/ept-logo.png" alt="EPT" width={20} height={20} className="opacity-40" />
+                  <Image src={theme === 'dark' ? '/ept-logo-dark.png' : '/ept-logo-light.png'} alt="EPT" width={22} height={22} className="opacity-40 object-contain" />
                 </div>
               )}
             </div>
@@ -156,14 +156,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </div>
               </div>
 
-              {/* Center — large logo */}
+              {/* Center — large logo, switches with theme */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <Image
-                  src="/ept-logo.png"
+                  src={theme === 'dark' ? '/ept-logo-dark.png' : '/ept-logo-light.png'}
                   alt="Echo Prime Technologies"
-                  width={200}
-                  height={40}
-                  className="h-8 w-auto object-contain"
+                  width={260}
+                  height={48}
+                  className="h-9 w-auto object-contain"
                   priority
                 />
               </div>
