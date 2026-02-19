@@ -143,7 +143,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* Main Content */}
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Top Bar */}
-            <header className="h-[72px] glass-topbar flex items-center justify-between px-6 relative">
+            <header className="h-[90px] glass-topbar flex items-center justify-between px-6 relative">
               {/* Left — page title + live dot */}
               <div className="flex items-center gap-4 z-10">
                 <h1 className="font-orbitron text-xs text-[--text-48] tracking-[0.15em] uppercase">
@@ -161,7 +161,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <img
                   src={theme === 'dark' ? '/ept-logo-dark.png' : '/ept-logo-light.png'}
                   alt="Echo Prime Technologies"
-                  style={{ height: '52px', width: 'auto' }}
+                  style={{ height: '70px', width: 'auto' }}
                 />
               </div>
 
