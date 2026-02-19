@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    INSURANCE SAVINGS CALCULATORS
@@ -191,7 +191,7 @@ const CALCULATORS: CalculatorDef[] = [
   },
 ];
 
-function CalculatorCard({ def }: { def: CalculatorDef }) {
+function CalculatorCard({ def, isDragging, showHandle }: { def: CalculatorDef; isDragging?: boolean; showHandle?: boolean }) {
   const [inputs, setInputs] = useState<Record<string, number>>(() => {
     const init: Record<string, number> = {};
     for (const f of def.fields) init[f.key] = f.defaultValue;
@@ -222,12 +222,20 @@ function CalculatorCard({ def }: { def: CalculatorDef }) {
   };
 
   return (
-    <div className="glass-panel p-6 relative overflow-hidden">
+    <div className={`glass-panel p-6 relative overflow-hidden transition-all duration-200 ${isDragging ? 'opacity-40 scale-[0.97]' : ''}`}>
       {/* Accent line */}
       <div className="absolute top-0 left-[10%] right-[10%] h-px" style={{ background: `linear-gradient(90deg, transparent, ${def.accentColor}60, transparent)` }} />
 
       {/* Header */}
       <div className="flex items-start gap-3 mb-5">
+        {/* Drag Handle — only visible in edit/customize mode */}
+        {showHandle && (
+          <div className="w-5 h-8 flex flex-col items-center justify-center gap-[3px] cursor-grab active:cursor-grabbing opacity-30 hover:opacity-70 transition-opacity shrink-0 mt-1 -ml-1">
+            <div className="flex gap-[3px]"><span className="w-1 h-1 rounded-full" style={{ background: 'var(--text-48)' }} /><span className="w-1 h-1 rounded-full" style={{ background: 'var(--text-48)' }} /></div>
+            <div className="flex gap-[3px]"><span className="w-1 h-1 rounded-full" style={{ background: 'var(--text-48)' }} /><span className="w-1 h-1 rounded-full" style={{ background: 'var(--text-48)' }} /></div>
+            <div className="flex gap-[3px]"><span className="w-1 h-1 rounded-full" style={{ background: 'var(--text-48)' }} /><span className="w-1 h-1 rounded-full" style={{ background: 'var(--text-48)' }} /></div>
+          </div>
+        )}
         <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${def.accentColor}12`, border: `1px solid ${def.accentColor}30` }}>
           <svg className="w-5 h-5" style={{ color: def.accentColor }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d={def.icon} />
@@ -311,21 +319,150 @@ function CalculatorCard({ def }: { def: CalculatorDef }) {
   );
 }
 
+// ── Drag-and-Drop Storage ────────────────────────────────────────────────
+const STORAGE_KEY = 'billymc_calc_order';
+
+function loadOrder(): number[] {
+  if (typeof window === 'undefined') return CALCULATORS.map((_, i) => i);
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as number[];
+      if (Array.isArray(parsed) && parsed.length === CALCULATORS.length) return parsed;
+    }
+  } catch {}
+  return CALCULATORS.map((_, i) => i);
+}
+
+function saveOrder(order: number[]) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(order)); } catch {}
+}
+
 // ── Page Component ──────────────────────────────────────────────────────
 export default function CalculatorsPage() {
+  const [order, setOrder] = useState<number[]>(() => loadOrder());
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [overIdx, setOverIdx] = useState<number | null>(null);
+  const [editMode, setEditMode] = useState(false);
+  const dragCounter = useRef<Record<number, number>>({});
+
+  useEffect(() => { setOrder(loadOrder()); }, []);
+
+  const handleDragStart = useCallback((e: React.DragEvent, idx: number) => {
+    setDragIdx(idx);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(idx));
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const handleDragEnter = useCallback((e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    dragCounter.current[idx] = (dragCounter.current[idx] || 0) + 1;
+    setOverIdx(idx);
+  }, []);
+
+  const handleDragLeave = useCallback((idx: number) => {
+    dragCounter.current[idx] = (dragCounter.current[idx] || 0) - 1;
+    if (dragCounter.current[idx] <= 0) {
+      dragCounter.current[idx] = 0;
+      setOverIdx(prev => prev === idx ? null : prev);
+    }
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent, dropIdx: number) => {
+    e.preventDefault();
+    dragCounter.current = {};
+    if (dragIdx === null || dragIdx === dropIdx) { setDragIdx(null); setOverIdx(null); return; }
+    setOrder(prev => {
+      const next = [...prev];
+      const [moved] = next.splice(dragIdx, 1);
+      next.splice(dropIdx, 0, moved);
+      saveOrder(next);
+      return next;
+    });
+    setDragIdx(null);
+    setOverIdx(null);
+  }, [dragIdx]);
+
+  const handleDragEnd = useCallback(() => {
+    setDragIdx(null);
+    setOverIdx(null);
+    dragCounter.current = {};
+  }, []);
+
+  const resetOrder = useCallback(() => {
+    const def = CALCULATORS.map((_, i) => i);
+    setOrder(def);
+    saveOrder(def);
+  }, []);
+
   return (
     <div className="space-y-6 animate-fadeInUp">
-      <div>
-        <h2 className="text-xl font-bold" style={{ color: 'var(--text-100)' }}>Calculators</h2>
-        <p className="text-sm" style={{ color: 'var(--text-24)' }}>Insurance savings calculators for live calls and proposals</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold" style={{ color: 'var(--text-100)' }}>Calculators</h2>
+          <p className="text-sm" style={{ color: 'var(--text-24)' }}>Insurance savings calculators for live calls and proposals</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setEditMode(p => !p)}
+            className={`btn-ghost px-3 py-1.5 text-xs flex items-center gap-1.5 ${editMode ? 'ring-1 ring-blue-500/40 text-blue-400' : ''}`}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+            {editMode ? 'Done' : 'Customize'}
+          </button>
+          {editMode && (
+            <button onClick={resetOrder} className="btn-ghost px-3 py-1.5 text-xs flex items-center gap-1.5 text-amber-400">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
+              </svg>
+              Reset
+            </button>
+          )}
+        </div>
       </div>
 
+      {editMode && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ background: 'var(--surface-2)', color: 'var(--text-48)', border: '1px solid var(--border-base)' }}>
+          <svg className="w-4 h-4 shrink-0 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+          </svg>
+          Drag calculator cards to reorder. Your layout is saved automatically.
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {CALCULATORS.map((def, i) => (
-          <div key={def.title} className={`stagger-${i + 1}`} style={{ animationFillMode: 'both' }}>
-            <CalculatorCard def={def} />
-          </div>
-        ))}
+        {order.map((calcIdx, posIdx) => {
+          const def = CALCULATORS[calcIdx];
+          if (!def) return null;
+          const isOver = overIdx === posIdx && dragIdx !== posIdx;
+          return (
+            <div
+              key={def.title}
+              className={`stagger-${posIdx + 1} transition-all duration-200 rounded-2xl ${isOver ? 'ring-2 ring-blue-500/50 ring-offset-2 ring-offset-transparent scale-[1.01]' : ''}`}
+              style={{ animationFillMode: 'both' }}
+              draggable={editMode}
+              onDragStart={e => handleDragStart(e, posIdx)}
+              onDragOver={handleDragOver}
+              onDragEnter={e => handleDragEnter(e, posIdx)}
+              onDragLeave={() => handleDragLeave(posIdx)}
+              onDrop={e => handleDrop(e, posIdx)}
+              onDragEnd={handleDragEnd}
+            >
+              <CalculatorCard
+                def={def}
+                isDragging={dragIdx === posIdx}
+                showHandle={editMode}
+              />
+            </div>
+          );
+        })}
       </div>
     </div>
   );
