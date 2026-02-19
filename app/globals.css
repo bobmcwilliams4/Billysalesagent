@@ -718,3 +718,98 @@ select option {
 .powered-footer:hover img {
   opacity: 1 !important;
 }
+
+/* ── Print Styles (Call Report PDF Export) ────────────────────────────── */
+
+@media print {
+  /* Hide app chrome */
+  .glass-sidebar,
+  .glass-topbar,
+  .copilot-panel,
+  .noise-overlay::before,
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  /* Reset layout */
+  body {
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .noise-overlay {
+    display: block !important;
+  }
+
+  /* Make main content full width */
+  .noise-overlay > div:last-child {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  main {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Print header */
+  .animate-fadeInUp::before {
+    content: 'BillyMC Call Report  |  ' attr(data-print-date);
+    display: block;
+    font-size: 18px;
+    font-weight: bold;
+    color: #111;
+    border-bottom: 2px solid #333;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+  }
+
+  /* Glass panels become white with borders */
+  .glass-panel,
+  .glass-panel-elevated {
+    background: white !important;
+    backdrop-filter: none !important;
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  /* Text colors for print */
+  .text-white\/90,
+  .text-white\/60,
+  .text-white\/40,
+  .text-white\/25,
+  .text-white\/15 {
+    color: #333 !important;
+  }
+
+  h2, h3 {
+    color: #111 !important;
+  }
+
+  /* Ensure transcript scrollable area shows fully */
+  .h-\\[500px\\] {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Page setup */
+  @page {
+    margin: 1.5cm;
+    size: A4;
+  }
+
+  /* Timestamp footer */
+  .animate-fadeInUp::after {
+    content: 'Generated: ' attr(data-print-date) ' | Powered by Echo Prime Technologies';
+    display: block;
+    font-size: 10px;
+    color: #999;
+    text-align: center;
+    border-top: 1px solid #ddd;
+    padding-top: 8px;
+    margin-top: 16px;
+  }
+}

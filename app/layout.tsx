@@ -23,6 +23,7 @@ const NAV_ITEMS = [
   { href: '/scripts', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', label: 'Scripts' },
   { href: '/appointments', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', label: 'Appointments' },
   { href: '/emails', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', label: 'Emails' },
+  { href: '/calculators', icon: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z', label: 'Calculators' },
   { href: '/analytics', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', label: 'Analytics' },
   { href: '/approvals', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', label: 'Approvals' },
   { href: '/settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z', label: 'Settings' },
@@ -64,7 +65,7 @@ function useTheme() {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { theme, toggle: toggleTheme } = useTheme();
 
   useEffect(() => {
@@ -84,33 +85,36 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <div className="noise-overlay flex h-screen overflow-hidden bg-surface-0">
-          {/* Sidebar */}
-          <aside className={`${sidebarOpen ? 'w-56' : 'w-16'} transition-all duration-300 flex flex-col glass-sidebar`}>
+          {/* Sidebar — hover to expand */}
+          <aside
+            onMouseEnter={() => setSidebarOpen(true)}
+            onMouseLeave={() => setSidebarOpen(false)}
+            className={`${sidebarOpen ? 'w-56' : 'w-16'} transition-all duration-200 ease-out flex flex-col glass-sidebar relative z-30`}
+          >
             {/* Logo */}
-            <div className="p-4 border-b border-[--border-base] flex items-center gap-3">
+            <div className="p-4 border-b border-[--border-base] flex items-center gap-3 h-[60px]">
               <Image
                 src="/ept-logo.png"
                 alt="Echo Prime Technologies"
-                width={36}
-                height={36}
+                width={32}
+                height={32}
                 className="shrink-0 rounded-lg"
               />
-              {sidebarOpen && (
-                <div className="animate-fadeIn">
-                  <span className="font-orbitron text-sm text-[--text-100] tracking-wider">BillyMC</span>
-                  <p className="text-[9px] text-[--text-24] tracking-widest uppercase">AI Sales Platform</p>
-                </div>
-              )}
+              <div className={`overflow-hidden transition-all duration-200 ${sidebarOpen ? 'w-32 opacity-100' : 'w-0 opacity-0'}`}>
+                <span className="font-orbitron text-sm text-[--text-100] tracking-wider whitespace-nowrap">BillyMC</span>
+                <p className="text-[9px] text-[--text-24] tracking-widest uppercase whitespace-nowrap">AI Sales Platform</p>
+              </div>
             </div>
 
             {/* Nav */}
-            <nav className="flex-1 py-3 overflow-y-auto">
+            <nav className="flex-1 py-3 overflow-y-auto overflow-x-hidden">
               {NAV_ITEMS.map((item) => {
                 const active = item.exact ? pathname === item.href : (item.href === '/' ? pathname === '/' : pathname.startsWith(item.href));
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
+                    title={!sidebarOpen ? item.label : undefined}
                     className={`flex items-center gap-3 px-3 py-2.5 mx-2 my-0.5 rounded-xl text-sm transition-all duration-150 ${
                       active
                         ? 'nav-active font-medium'
@@ -118,7 +122,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     }`}
                   >
                     <NavIcon d={item.icon} className={`w-[18px] h-[18px] shrink-0 ${active ? 'text-blue-500 dark:text-blue-400' : ''}`} />
-                    {sidebarOpen && <span className="truncate">{item.label}</span>}
+                    <span className={`truncate transition-all duration-200 ${sidebarOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'}`}>{item.label}</span>
                   </Link>
                 );
               })}
@@ -127,9 +131,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {/* Powered by EPT Footer */}
             <div className="powered-footer">
               {sidebarOpen ? (
-                <div className="flex flex-col items-center gap-1">
+                <div className="flex flex-col items-center gap-1 animate-fadeIn">
                   <p className="text-[9px] text-[--text-24] uppercase tracking-[0.12em]">Powered by</p>
-                  <p className="chromatic-text text-[11px] font-orbitron font-semibold tracking-wider">
+                  <p className="chromatic-text text-[11px] font-orbitron font-semibold tracking-wider whitespace-nowrap">
                     ECHO PRIME TECHNOLOGIES
                   </p>
                 </div>
@@ -139,16 +143,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </div>
               )}
             </div>
-
-            {/* Collapse toggle */}
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-4 border-t border-[--border-base] text-[--text-24] hover:text-[--text-72] transition-colors"
-            >
-              <svg className={`w-4 h-4 transition-transform duration-300 ${sidebarOpen ? '' : 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-              </svg>
-            </button>
           </aside>
 
           {/* Main Content */}

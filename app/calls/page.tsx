@@ -65,6 +65,110 @@ function StatusBadge({ status }: { status: Call['status'] }) {
   );
 }
 
+// ── Sentiment Badge ────────────────────────────────────────────────────────
+
+function SentimentBadge({ sentiment }: { sentiment: string | null }) {
+  if (!sentiment) return <span className="text-white/15 text-xs">--</span>;
+
+  const s = sentiment.toLowerCase();
+  if (s === 'positive') {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        Positive
+      </span>
+    );
+  }
+  if (s === 'negative') {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-red-500/15 text-red-400 border border-red-500/20">
+        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+        Negative
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-white/[0.06] text-white/40 border border-white/[0.06]">
+      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm-4-8c.79 0 1.5-.71 1.5-1.5S8.79 9 8 9s-1.5.71-1.5 1.5S7.21 12 8 12zm8 0c.79 0 1.5-.71 1.5-1.5S16.79 9 16 9s-1.5.71-1.5 1.5.71 1.5 1.5 1.5zm-4 4c-1.62 0-3-.5-3-1h6c0 .5-1.38 1-3 1z"/></svg>
+      Neutral
+    </span>
+  );
+}
+
+// ── Two-Party Consent ──────────────────────────────────────────────────────
+
+const TWO_PARTY_AREA_CODES: Record<string, string> = {
+  // CA
+  '209': 'CA', '213': 'CA', '310': 'CA', '323': 'CA', '341': 'CA', '350': 'CA', '408': 'CA', '415': 'CA',
+  '424': 'CA', '442': 'CA', '510': 'CA', '530': 'CA', '559': 'CA', '562': 'CA', '619': 'CA', '626': 'CA',
+  '628': 'CA', '650': 'CA', '657': 'CA', '661': 'CA', '669': 'CA', '707': 'CA', '714': 'CA', '747': 'CA',
+  '760': 'CA', '805': 'CA', '818': 'CA', '820': 'CA', '831': 'CA', '840': 'CA', '858': 'CA', '909': 'CA',
+  '916': 'CA', '925': 'CA', '949': 'CA', '951': 'CA',
+  // CT
+  '203': 'CT', '475': 'CT', '860': 'CT', '959': 'CT',
+  // FL
+  '239': 'FL', '305': 'FL', '321': 'FL', '352': 'FL', '386': 'FL', '407': 'FL', '561': 'FL', '727': 'FL',
+  '754': 'FL', '772': 'FL', '786': 'FL', '813': 'FL', '850': 'FL', '863': 'FL', '904': 'FL', '941': 'FL', '954': 'FL',
+  // IL
+  '217': 'IL', '224': 'IL', '309': 'IL', '312': 'IL', '331': 'IL', '618': 'IL', '630': 'IL', '708': 'IL',
+  '773': 'IL', '779': 'IL', '815': 'IL', '847': 'IL', '872': 'IL',
+  // MD
+  '240': 'MD', '301': 'MD', '410': 'MD', '443': 'MD', '667': 'MD',
+  // MA
+  '339': 'MA', '351': 'MA', '413': 'MA', '508': 'MA', '617': 'MA', '774': 'MA', '781': 'MA', '857': 'MA', '978': 'MA',
+  // MI
+  '231': 'MI', '248': 'MI', '269': 'MI', '313': 'MI', '517': 'MI', '586': 'MI', '616': 'MI', '734': 'MI',
+  '810': 'MI', '906': 'MI', '947': 'MI', '989': 'MI',
+  // MT
+  '406': 'MT',
+  // NV
+  '702': 'NV', '725': 'NV', '775': 'NV',
+  // NH
+  '603': 'NH',
+  // OR
+  '458': 'OR', '503': 'OR', '541': 'OR', '971': 'OR',
+  // PA
+  '215': 'PA', '223': 'PA', '267': 'PA', '272': 'PA', '412': 'PA', '445': 'PA', '484': 'PA', '570': 'PA',
+  '582': 'PA', '610': 'PA', '717': 'PA', '724': 'PA', '814': 'PA', '835': 'PA', '878': 'PA',
+  // WA
+  '206': 'WA', '253': 'WA', '360': 'WA', '425': 'WA', '509': 'WA', '564': 'WA',
+};
+
+function getTwoPartyState(phone: string): string | null {
+  const digits = phone.replace(/\D/g, '');
+  let areaCode = '';
+  if (digits.length === 11 && digits.startsWith('1')) {
+    areaCode = digits.substring(1, 4);
+  } else if (digits.length === 10) {
+    areaCode = digits.substring(0, 3);
+  }
+  return TWO_PARTY_AREA_CODES[areaCode] || null;
+}
+
+function TwoPartyBadge({ phone }: { phone: string }) {
+  const state = getTwoPartyState(phone);
+  if (!state) return null;
+  return (
+    <span
+      className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/20 ml-1.5"
+      title={`Two-party consent state: ${state}`}
+    >
+      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+      </svg>
+      2P
+    </span>
+  );
+}
+
+function getSentimentRowTint(sentiment: string | null): string {
+  if (!sentiment) return '';
+  const s = sentiment.toLowerCase();
+  if (s === 'positive') return 'bg-emerald-500/[0.03]';
+  if (s === 'negative') return 'bg-red-500/[0.03]';
+  return '';
+}
+
 // ── Direction Icon ──────────────────────────────────────────────────────────
 
 function DirectionIcon({ dir }: { dir: 'inbound' | 'outbound' }) {
@@ -298,13 +402,14 @@ export default function CallLogPage() {
                   <th className="text-left px-4 py-3 text-[10px] text-white/25 uppercase tracking-[0.1em] font-medium">Duration</th>
                   <th className="text-left px-4 py-3 text-[10px] text-white/25 uppercase tracking-[0.1em] font-medium">Status</th>
                   <th className="text-left px-4 py-3 text-[10px] text-white/25 uppercase tracking-[0.1em] font-medium">Disposition</th>
+                  <th className="text-left px-4 py-3 text-[10px] text-white/25 uppercase tracking-[0.1em] font-medium">Sentiment</th>
                   <th className="text-right px-4 py-3 text-[10px] text-white/25 uppercase tracking-[0.1em] font-medium">Cost</th>
                   <th className="text-right px-4 py-3 text-[10px] text-white/25 uppercase tracking-[0.1em] font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((call) => (
-                  <tr key={call.id} className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors group">
+                  <tr key={call.id} className={`border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors group ${getSentimentRowTint(call.sentiment)}`}>
                     <td className="px-4 py-3">
                       <p className="text-sm text-white/60">{fmtTime(call.started_at)}</p>
                       <p className="text-[10px] text-white/15">{fmtDate(call.started_at)}</p>
@@ -314,7 +419,10 @@ export default function CallLogPage() {
                       <p className="text-[10px] text-white/25">{call.lead_phone}</p>
                     </td>
                     <td className="px-4 py-3">
-                      <DirectionIcon dir={call.direction} />
+                      <div className="flex items-center">
+                        <DirectionIcon dir={call.direction} />
+                        <TwoPartyBadge phone={call.lead_phone} />
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <span className="text-sm text-white/60 font-mono">{fmtDuration(call.duration_seconds)}</span>
@@ -324,6 +432,9 @@ export default function CallLogPage() {
                     </td>
                     <td className="px-4 py-3">
                       <span className="text-sm text-white/40">{call.disposition || '--'}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <SentimentBadge sentiment={call.sentiment} />
                     </td>
                     <td className="px-4 py-3 text-right">
                       <span className="text-sm text-white/60 font-mono">${call.cost.toFixed(2)}</span>

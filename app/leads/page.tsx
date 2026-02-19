@@ -16,6 +16,7 @@ interface Lead {
   status: LeadStatus;
   source: string;
   priority: number;
+  score?: number;
   assigned_to: string;
   notes: string;
   last_contacted: string;
@@ -23,6 +24,20 @@ interface Lead {
   created_at: string;
   updated_at: string;
   tags: string[];
+}
+
+interface ScoreBreakdown {
+  engagement: number;
+  recency: number;
+  data_completeness: number;
+  call_history: number;
+  overall: number;
+}
+
+interface VerifyResult {
+  verified: boolean;
+  confidence: number;
+  details: string;
 }
 
 const STATUS_CONFIG: Record<LeadStatus, { label: string; color: string; bg: string }> = {
@@ -66,6 +81,78 @@ function PriorityDots({ priority }: { priority: number }) {
         />
       ))}
     </div>
+  );
+}
+
+function LeadScore({ score }: { score?: number }) {
+  if (score === undefined || score === null) {
+    return (
+      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium text-white/15 bg-white/[0.03] border border-white/[0.04]">
+        --
+      </span>
+    );
+  }
+  let label: string;
+  let color: string;
+  let bg: string;
+  if (score <= 30) {
+    label = 'Cold';
+    color = '#EF4444';
+    bg = 'rgba(239,68,68,0.15)';
+  } else if (score <= 60) {
+    label = 'Warm';
+    color = '#F59E0B';
+    bg = 'rgba(245,158,11,0.15)';
+  } else if (score <= 80) {
+    label = 'Hot';
+    color = '#10B981';
+    bg = 'rgba(16,185,129,0.15)';
+  } else {
+    label = 'On Fire';
+    color = '#059669';
+    bg = 'rgba(5,150,105,0.15)';
+  }
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap"
+      style={{ color, backgroundColor: bg }}
+    >
+      {score >= 81 && (
+        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.41 16.09V13.5H8l4-7.59v4.59H14.5l-3.91 7.59z" />
+        </svg>
+      )}
+      {score} - {label}
+    </span>
+  );
+}
+
+function ScoreBar({ score }: { score: number }) {
+  const pct = Math.max(0, Math.min(100, score));
+  let gradientEnd: string;
+  if (pct <= 30) gradientEnd = '#EF4444';
+  else if (pct <= 60) gradientEnd = '#F59E0B';
+  else if (pct <= 80) gradientEnd = '#10B981';
+  else gradientEnd = '#059669';
+  return (
+    <div className="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden">
+      <div
+        className="h-full rounded-full transition-all duration-500"
+        style={{
+          width: `${pct}%`,
+          background: `linear-gradient(90deg, #EF4444 0%, #F59E0B 35%, #10B981 65%, ${gradientEnd} 100%)`,
+          backgroundSize: '100% 100%',
+        }}
+      />
+    </div>
+  );
+}
+
+function ShieldIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+    </svg>
   );
 }
 
@@ -343,6 +430,129 @@ function AddLeadModal({ open, onClose, onAdd }: { open: boolean; onClose: () => 
   );
 }
 
+function LeadIntelligenceSection({ lead }: { lead: Lead }) {
+  const [breakdown, setBreakdown] = useState<ScoreBreakdown | null>(null);
+  const [loadingScore, setLoadingScore] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchScore() {
+      setLoadingScore(true);
+      try {
+        const res = await apiFetch(`/leads/${lead.id}/score`);
+        if (res.ok && !cancelled) {
+          const data = await res.json();
+          setBreakdown(data);
+        }
+      } catch {
+        // API unavailable
+      } finally {
+        if (!cancelled) setLoadingScore(false);
+      }
+    }
+    fetchScore();
+    return () => { cancelled = true; };
+  }, [lead.id]);
+
+  async function handleVerify() {
+    setVerifying(true);
+    setVerifyResult(null);
+    try {
+      const res = await apiFetch(`/leads/${lead.id}/verify`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        setVerifyResult(data);
+      }
+    } catch {
+      // API unavailable
+    } finally {
+      setVerifying(false);
+    }
+  }
+
+  const scoreFactors = [
+    { label: 'Engagement', key: 'engagement' as const, color: '#3B82F6' },
+    { label: 'Recency', key: 'recency' as const, color: '#8B5CF6' },
+    { label: 'Data Completeness', key: 'data_completeness' as const, color: '#10B981' },
+    { label: 'Call History', key: 'call_history' as const, color: '#F59E0B' },
+  ];
+
+  return (
+    <div className="space-y-3">
+      <h4 className="text-[10px] text-white/25 uppercase tracking-[0.1em]">Lead Intelligence</h4>
+
+      {/* Score Bar */}
+      <div className="stat-mini p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-white/40">Lead Score</span>
+          <span className="text-sm font-bold text-white/90">{lead.score ?? '--'} / 100</span>
+        </div>
+        <ScoreBar score={lead.score ?? 0} />
+        <LeadScore score={lead.score} />
+      </div>
+
+      {/* Score Breakdown */}
+      <div className="stat-mini p-4 space-y-3">
+        <span className="text-xs text-white/40">Score Breakdown</span>
+        {loadingScore ? (
+          <div className="flex items-center gap-2 py-2">
+            <div className="skeleton h-4 w-4 rounded-full" />
+            <span className="text-xs text-white/25">Loading score data...</span>
+          </div>
+        ) : breakdown ? (
+          <div className="space-y-2.5">
+            {scoreFactors.map(({ label, key, color }) => (
+              <div key={key}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] text-white/40">{label}</span>
+                  <span className="text-[11px] font-medium" style={{ color }}>{breakdown[key]}</span>
+                </div>
+                <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{ width: `${breakdown[key]}%`, backgroundColor: color }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-white/15 py-2">Score data unavailable</p>
+        )}
+      </div>
+
+      {/* Verify Lead */}
+      <button
+        onClick={handleVerify}
+        disabled={verifying}
+        className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-cyan-600/20 text-cyan-400 border border-cyan-500/20 hover:border-cyan-500/40 text-sm transition-colors disabled:opacity-50"
+      >
+        {verifying ? (
+          <div className="skeleton h-4 w-4 rounded-full" />
+        ) : (
+          <ShieldIcon />
+        )}
+        {verifying ? 'Verifying...' : 'Verify Lead'}
+      </button>
+      {verifyResult && (
+        <div className={`stat-mini p-3 space-y-1 border ${verifyResult.verified ? 'border-emerald-500/20' : 'border-red-500/20'}`}>
+          <div className="flex items-center gap-2">
+            <span className={`text-xs font-medium ${verifyResult.verified ? 'text-emerald-400' : 'text-red-400'}`}>
+              {verifyResult.verified ? 'Verified' : 'Not Verified'}
+            </span>
+            <span className="text-[10px] text-white/25">Confidence: {verifyResult.confidence}%</span>
+          </div>
+          {verifyResult.details && (
+            <p className="text-[11px] text-white/40">{verifyResult.details}</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SlideOverPanel({ lead, onClose }: { lead: Lead | null; onClose: () => void }) {
   if (!lead) return null;
 
@@ -362,11 +572,15 @@ function SlideOverPanel({ lead, onClose }: { lead: Lead | null; onClose: () => v
           </div>
           <div className="flex items-center gap-3 mt-3">
             <StatusBadge status={lead.status} />
+            <LeadScore score={lead.score} />
             <PriorityDots priority={lead.priority} />
           </div>
         </div>
 
         <div className="p-6 space-y-6">
+          {/* Lead Intelligence Section */}
+          <LeadIntelligenceSection lead={lead} />
+
           <div className="space-y-3">
             <h4 className="text-[10px] text-white/25 uppercase tracking-[0.1em]">Contact</h4>
             <div className="space-y-2">
@@ -459,7 +673,10 @@ function PipelineCard({ lead, onClick }: { lead: Lead; onClick: () => void }) {
         </p>
         <PriorityDots priority={lead.priority} />
       </div>
-      <p className="text-xs text-white/40 mb-1">{lead.phone}</p>
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-xs text-white/40">{lead.phone}</p>
+        <LeadScore score={lead.score} />
+      </div>
       {lead.company && <p className="text-xs text-white/25 mb-2">{lead.company}</p>}
       <div className="flex items-center justify-between">
         <span className="text-[10px] text-white/15">{lead.source}</span>
@@ -649,6 +866,7 @@ export default function LeadsPage() {
                     <th className="text-left text-[10px] text-white/25 uppercase tracking-[0.1em] font-medium px-4 py-3">Phone</th>
                     <th className="text-left text-[10px] text-white/25 uppercase tracking-[0.1em] font-medium px-4 py-3 hidden md:table-cell">Email</th>
                     <th className="text-left text-[10px] text-white/25 uppercase tracking-[0.1em] font-medium px-4 py-3">Status</th>
+                    <th className="text-left text-[10px] text-white/25 uppercase tracking-[0.1em] font-medium px-4 py-3 hidden md:table-cell">Score</th>
                     <th className="text-left text-[10px] text-white/25 uppercase tracking-[0.1em] font-medium px-4 py-3 hidden lg:table-cell">Source</th>
                     <th className="text-left text-[10px] text-white/25 uppercase tracking-[0.1em] font-medium px-4 py-3 hidden lg:table-cell">Last Contact</th>
                     <th className="text-left text-[10px] text-white/25 uppercase tracking-[0.1em] font-medium px-4 py-3 hidden sm:table-cell">Priority</th>
@@ -658,7 +876,7 @@ export default function LeadsPage() {
                 <tbody>
                   {paginatedLeads.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="text-center py-12 text-white/25 text-sm">
+                      <td colSpan={9} className="text-center py-12 text-white/25 text-sm">
                         No leads found matching your filters
                       </td>
                     </tr>
@@ -681,6 +899,9 @@ export default function LeadsPage() {
                         </td>
                         <td className="px-4 py-3">
                           <StatusBadge status={lead.status} />
+                        </td>
+                        <td className="px-4 py-3 hidden md:table-cell">
+                          <LeadScore score={lead.score} />
                         </td>
                         <td className="px-4 py-3 hidden lg:table-cell">
                           <span className="text-sm text-white/40">{lead.source}</span>

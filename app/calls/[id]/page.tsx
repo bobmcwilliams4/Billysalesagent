@@ -34,6 +34,19 @@ interface CoachingNote {
   text: string;
 }
 
+interface CoachingKeyMoment {
+  timestamp: number;
+  description: string;
+}
+
+interface CoachingData {
+  grade: 'A' | 'B' | 'C' | 'D' | 'F';
+  went_well: string[];
+  improvements: string[];
+  missed_opportunities: string[];
+  key_moments: CoachingKeyMoment[];
+}
+
 interface CallDetail {
   id: string;
   lead_name: string;
@@ -56,7 +69,28 @@ interface CallDetail {
   campaign_name: string | null;
   script_name: string | null;
   recording_url: string | null;
+  ai_suggested_disposition?: string;
 }
+
+type DispositionValue = 'interested' | 'callback_requested' | 'not_interested' | 'voicemail_left' | 'wrong_number' | 'dnc_request' | '';
+
+const DISPOSITION_OPTIONS: { value: DispositionValue; label: string; color: string; icon: string }[] = [
+  { value: 'interested', label: 'Interested', color: '#10B981', icon: 'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+  { value: 'callback_requested', label: 'Callback Requested', color: '#3B82F6', icon: 'M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z' },
+  { value: 'not_interested', label: 'Not Interested', color: '#F59E0B', icon: 'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636' },
+  { value: 'voicemail_left', label: 'Voicemail Left', color: '#8B5CF6', icon: 'M21.75 9v.906a2.25 2.25 0 01-1.183 1.981l-6.478 3.488M2.25 9v.906a2.25 2.25 0 001.183 1.981l6.478 3.488m8.839 2.51l-4.66-2.51m0 0l-1.023-.55a2.25 2.25 0 00-2.134 0l-1.022.55m0 0l-4.661 2.51' },
+  { value: 'wrong_number', label: 'Wrong Number', color: '#EF4444', icon: 'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z' },
+  { value: 'dnc_request', label: 'DNC Request', color: '#DC2626', icon: 'M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z' },
+];
+
+const DISPOSITION_ACTIONS: Record<string, string> = {
+  interested: 'Book an appointment to continue the conversation.',
+  callback_requested: 'Schedule a callback at their preferred time.',
+  not_interested: 'Add to 90-day nurture sequence for future re-engagement.',
+  voicemail_left: 'Retry in 24-48 hours at a different time.',
+  wrong_number: 'Remove from active list and verify lead data.',
+  dnc_request: 'Immediately add to Do Not Call registry.',
+};
 
 // -- Helpers -----------------------------------------------------------------
 
@@ -77,6 +111,84 @@ function fmtDateTime(iso: string): string {
     weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
     hour: 'numeric', minute: '2-digit', hour12: true,
   });
+}
+
+function generateTextReport(call: CallDetail): void {
+  const lines: string[] = [];
+  lines.push('='.repeat(60));
+  lines.push('  BillyMC Call Report');
+  lines.push('  Generated: ' + new Date().toLocaleString());
+  lines.push('='.repeat(60));
+  lines.push('');
+  lines.push('CALL DETAILS');
+  lines.push('-'.repeat(40));
+  lines.push(`Lead Name:       ${call.lead_name}`);
+  lines.push(`Phone:           ${call.lead_phone}`);
+  if (call.lead_email) lines.push(`Email:           ${call.lead_email}`);
+  lines.push(`Date:            ${fmtDateTime(call.started_at)}`);
+  if (call.ended_at) lines.push(`Ended:           ${fmtDateTime(call.ended_at)}`);
+  lines.push(`Duration:        ${fmtDuration(call.duration_seconds)}`);
+  lines.push(`Direction:       ${call.direction}`);
+  lines.push(`Status:          ${call.status}`);
+  lines.push(`Disposition:     ${call.disposition}`);
+  lines.push(`Sentiment:       ${call.sentiment_overall}`);
+  if (call.campaign_name) lines.push(`Campaign:        ${call.campaign_name}`);
+  if (call.script_name) lines.push(`Script:          ${call.script_name}`);
+  lines.push(`Call ID:         ${call.id}`);
+  lines.push('');
+  lines.push('COST BREAKDOWN');
+  lines.push('-'.repeat(40));
+  lines.push(`Twilio:          $${call.cost_breakdown.twilio.toFixed(3)}`);
+  lines.push(`Deepgram (STT):  $${call.cost_breakdown.deepgram.toFixed(3)}`);
+  lines.push(`ElevenLabs (TTS):$${call.cost_breakdown.elevenlabs.toFixed(3)}`);
+  lines.push(`LLM:             $${call.cost_breakdown.llm.toFixed(3)}`);
+  lines.push(`Total:           $${call.cost_breakdown.total.toFixed(2)}`);
+  lines.push('');
+  if (call.transcript_summary) {
+    lines.push('AI SUMMARY');
+    lines.push('-'.repeat(40));
+    lines.push(call.transcript_summary);
+    lines.push('');
+  }
+  if (call.transcript.length > 0) {
+    lines.push('TRANSCRIPT');
+    lines.push('-'.repeat(40));
+    call.transcript.forEach((line) => {
+      const speaker = line.speaker === 'agent' ? 'BillyMC' : call.lead_name.split(' ')[0];
+      lines.push(`[${fmtTimestamp(line.timestamp)}] ${speaker}: ${line.text}`);
+    });
+    lines.push('');
+  }
+  if (call.highlights.length > 0) {
+    lines.push('HIGHLIGHTS');
+    lines.push('-'.repeat(40));
+    call.highlights.forEach((h) => {
+      lines.push(`[${fmtTimestamp(h.timestamp)}] ${h.type.toUpperCase()}: ${h.label}`);
+      lines.push(`  ${h.detail}`);
+    });
+    lines.push('');
+  }
+  if (call.coaching_notes.length > 0) {
+    lines.push('COACHING NOTES');
+    lines.push('-'.repeat(40));
+    call.coaching_notes.forEach((n) => {
+      lines.push(`[${n.category.toUpperCase()}] ${n.text}`);
+    });
+    lines.push('');
+  }
+  lines.push('='.repeat(60));
+  lines.push('  End of Report');
+  lines.push('='.repeat(60));
+
+  const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `call-report-${call.id}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function SkeletonBlock({ className }: { className?: string }) {
@@ -152,6 +264,17 @@ export default function CallReviewPage() {
   const [call, setCall] = useState<CallDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'transcript' | 'highlights' | 'coaching'>('transcript');
+  const [coachingData, setCoachingData] = useState<CoachingData | null>(null);
+  const [coachingLoading, setCoachingLoading] = useState(false);
+
+  // Disposition state
+  const [selectedDisposition, setSelectedDisposition] = useState<DispositionValue>('');
+  const [callbackDate, setCallbackDate] = useState('');
+  const [callbackTime, setCallbackTime] = useState('');
+  const [nurtureToggle, setNurtureToggle] = useState(false);
+  const [dncConfirmed, setDncConfirmed] = useState(false);
+  const [dispositionSaving, setDispositionSaving] = useState(false);
+  const [dispositionSaved, setDispositionSaved] = useState(false);
 
   // Audio player state
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -178,6 +301,24 @@ export default function CallReviewPage() {
       setLoading(false);
     }
     fetchCall();
+  }, [callId]);
+
+  // Fetch coaching data
+  useEffect(() => {
+    async function fetchCoaching() {
+      setCoachingLoading(true);
+      try {
+        const res = await apiFetch(`/calls/${callId}/coaching`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.data) setCoachingData(json.data);
+        }
+      } catch {
+        // API not live yet
+      }
+      setCoachingLoading(false);
+    }
+    fetchCoaching();
   }, [callId]);
 
   // Audio time update
@@ -278,6 +419,14 @@ export default function CallReviewPage() {
 
   const sent = sentimentLabel(call.sentiment_overall);
 
+  const gradeConfig: Record<string, { color: string; bg: string; border: string }> = {
+    A: { color: 'text-emerald-400', bg: 'bg-emerald-500/15', border: 'border-emerald-500/30' },
+    B: { color: 'text-blue-400', bg: 'bg-blue-500/15', border: 'border-blue-500/30' },
+    C: { color: 'text-amber-400', bg: 'bg-amber-500/15', border: 'border-amber-500/30' },
+    D: { color: 'text-orange-400', bg: 'bg-orange-500/15', border: 'border-orange-500/30' },
+    F: { color: 'text-red-400', bg: 'bg-red-500/15', border: 'border-red-500/30' },
+  };
+
   return (
     <div className="space-y-5 animate-fadeInUp">
       {/* Back + Header */}
@@ -301,7 +450,19 @@ export default function CallReviewPage() {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 print:hidden">
+          <button onClick={() => window.print()} className="px-3 py-2 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 text-xs hover:bg-cyan-500/25 transition-colors">
+            <svg className="w-4 h-4 inline mr-1.5 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12l3 3m0 0l3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+            Export PDF
+          </button>
+          <button onClick={() => generateTextReport(call)} className="px-3 py-2 rounded-lg bg-gray-500/15 border border-gray-500/30 text-gray-400 text-xs hover:bg-gray-500/25 transition-colors">
+            <svg className="w-4 h-4 inline mr-1.5 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            Download .txt
+          </button>
           <button className="px-3 py-2 rounded-lg bg-blue-500/15 border border-blue-500/30 text-blue-400 text-xs hover:bg-blue-500/25 transition-colors">
             <svg className="w-4 h-4 inline mr-1.5 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
@@ -511,39 +672,169 @@ export default function CallReviewPage() {
               )
             )}
 
-            {/* Coaching Tab */}
+            {/* Coaching Tab — AI Call Coaching */}
             {activeTab === 'coaching' && (
-              call.coaching_notes.length === 0 ? (
+              coachingLoading ? (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-4" />
+                  <p className="text-sm text-white/40">Analyzing call...</p>
+                </div>
+              ) : !coachingData ? (
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <div className="w-12 h-12 rounded-full bg-white/[0.04] flex items-center justify-center text-white/25 mb-4">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
                     </svg>
                   </div>
-                  <p className="text-sm text-white/40">No coaching notes yet</p>
-                  <p className="text-xs text-white/25 mt-1">AI coaching insights will appear after analysis</p>
+                  <p className="text-sm text-white/40">Coaching notes will appear after the call is analyzed.</p>
+                  <p className="text-xs text-white/25 mt-1">AI reviews calls for tone, objection handling, and conversion tactics</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {call.coaching_notes.map((note, i) => {
-                    const categoryConfig: Record<CoachingNote['category'], { icon: string; color: string; label: string }> = {
-                      positive: { icon: 'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-emerald-400', label: 'Strength' },
-                      improvement: { icon: 'M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z', color: 'text-amber-400', label: 'Improve' },
-                      technique: { icon: 'M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z', color: 'text-blue-400', label: 'Technique' },
-                    };
-                    const nc = categoryConfig[note.category];
-                    return (
-                      <div key={i} className="flex gap-3 p-3 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-                        <svg className={`w-5 h-5 shrink-0 mt-0.5 ${nc.color}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d={nc.icon} />
+                <div className="space-y-5">
+                  {/* Grade Header */}
+                  <div className="glass-panel p-4 flex items-center gap-4">
+                    <div className="shrink-0">
+                      <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-medium text-white/90 tracking-tight">AI Coaching</h4>
+                      <p className="text-[10px] text-white/25">Automated performance analysis</p>
+                    </div>
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold border ${gradeConfig[coachingData.grade]?.bg || 'bg-white/5'} ${gradeConfig[coachingData.grade]?.border || 'border-white/10'} ${gradeConfig[coachingData.grade]?.color || 'text-white/40'}`}>
+                      {coachingData.grade}
+                    </div>
+                  </div>
+
+                  {/* What Went Well */}
+                  {coachingData.went_well.length > 0 && (
+                    <div>
+                      <h5 className="text-xs font-medium text-emerald-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <div>
-                          <span className={`text-[10px] uppercase tracking-wider font-medium ${nc.color}`}>{nc.label}</span>
-                          <p className="text-sm text-white/60 mt-1 leading-relaxed">{note.text}</p>
-                        </div>
+                        What Went Well
+                      </h5>
+                      <ul className="space-y-1.5">
+                        {coachingData.went_well.map((item, i) => (
+                          <li key={i} className="flex items-start gap-2 text-sm text-white/60 leading-relaxed">
+                            <svg className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Areas for Improvement */}
+                  {coachingData.improvements.length > 0 && (
+                    <div>
+                      <h5 className="text-xs font-medium text-amber-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                        </svg>
+                        Areas for Improvement
+                      </h5>
+                      <ul className="space-y-1.5">
+                        {coachingData.improvements.map((item, i) => (
+                          <li key={i} className="flex items-start gap-2 text-sm text-white/60 leading-relaxed">
+                            <svg className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75" />
+                            </svg>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Missed Opportunities */}
+                  {coachingData.missed_opportunities.length > 0 && (
+                    <div>
+                      <h5 className="text-xs font-medium text-red-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Missed Opportunities
+                      </h5>
+                      <ul className="space-y-1.5">
+                        {coachingData.missed_opportunities.map((item, i) => (
+                          <li key={i} className="flex items-start gap-2 text-sm text-white/60 leading-relaxed">
+                            <svg className="w-4 h-4 text-red-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Key Moments Timeline */}
+                  {coachingData.key_moments.length > 0 && (
+                    <div>
+                      <h5 className="text-xs font-medium text-blue-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Key Moments
+                      </h5>
+                      <div className="space-y-2 relative">
+                        <div className="absolute left-[23px] top-2 bottom-2 w-px bg-white/[0.06]" />
+                        {coachingData.key_moments.map((moment, i) => (
+                          <div
+                            key={i}
+                            className="flex items-start gap-3 cursor-pointer group hover:bg-white/[0.02] rounded-lg p-2 -ml-2 transition-colors"
+                            onClick={() => seekTo(moment.timestamp)}
+                          >
+                            <div className="shrink-0 w-6 h-6 rounded-full bg-blue-500/15 border border-blue-500/30 flex items-center justify-center z-10">
+                              <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <span className="text-[10px] font-mono text-blue-400 group-hover:text-blue-300">{fmtTimestamp(moment.timestamp)}</span>
+                              <p className="text-sm text-white/60 leading-relaxed">{moment.description}</p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    );
-                  })}
+                    </div>
+                  )}
+
+                  {/* Legacy coaching notes from call data */}
+                  {call.coaching_notes.length > 0 && (
+                    <div>
+                      <h5 className="text-xs font-medium text-purple-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                        </svg>
+                        Additional Notes
+                      </h5>
+                      <div className="space-y-2">
+                        {call.coaching_notes.map((note, i) => {
+                          const categoryConfig: Record<CoachingNote['category'], { icon: string; color: string; label: string }> = {
+                            positive: { icon: 'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-emerald-400', label: 'Strength' },
+                            improvement: { icon: 'M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z', color: 'text-amber-400', label: 'Improve' },
+                            technique: { icon: 'M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z', color: 'text-blue-400', label: 'Technique' },
+                          };
+                          const nc = categoryConfig[note.category];
+                          return (
+                            <div key={i} className="flex gap-3 p-3 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                              <svg className={`w-5 h-5 shrink-0 mt-0.5 ${nc.color}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d={nc.icon} />
+                              </svg>
+                              <div>
+                                <span className={`text-[10px] uppercase tracking-wider font-medium ${nc.color}`}>{nc.label}</span>
+                                <p className="text-sm text-white/60 mt-1 leading-relaxed">{note.text}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )
             )}
@@ -613,6 +904,186 @@ export default function CallReviewPage() {
               ))}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ── Disposition & Follow-Up Panel ──────────────────────────────────── */}
+      <div className="glass-panel p-5 animate-fadeInUp">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-medium text-white/90 tracking-tight">Disposition & Follow-Up</h3>
+          {call.ai_suggested_disposition && (
+            <span className="px-2.5 py-1 rounded-lg text-[10px] bg-purple-500/10 text-purple-300 border border-purple-500/20">
+              AI suggests: {call.ai_suggested_disposition}
+            </span>
+          )}
+          {dispositionSaved && (
+            <span className="px-2.5 py-1 rounded-lg text-[10px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+              Saved
+            </span>
+          )}
+        </div>
+
+        {/* Disposition Selector */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 mb-5">
+          {DISPOSITION_OPTIONS.map((opt) => {
+            const isSelected = selectedDisposition === opt.value;
+            return (
+              <button
+                key={opt.value}
+                onClick={() => {
+                  setSelectedDisposition(opt.value);
+                  setDispositionSaved(false);
+                  setDncConfirmed(false);
+                }}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border text-xs transition-all ${
+                  isSelected
+                    ? 'border-opacity-40 scale-[1.02]'
+                    : 'border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.02]'
+                }`}
+                style={{
+                  backgroundColor: isSelected ? `${opt.color}15` : undefined,
+                  borderColor: isSelected ? `${opt.color}40` : undefined,
+                  color: isSelected ? opt.color : 'rgba(255,255,255,0.5)',
+                }}
+              >
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d={opt.icon} />
+                </svg>
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Context-Specific Actions */}
+        {selectedDisposition && (
+          <div className="rounded-lg bg-white/[0.02] border border-white/[0.06] p-4 mb-4 animate-fadeInUp">
+            <p className="text-xs text-white/40 mb-3">
+              {DISPOSITION_ACTIONS[selectedDisposition]}
+            </p>
+
+            {/* Callback Requested: date/time picker */}
+            {selectedDisposition === 'callback_requested' && (
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <label className="text-[10px] text-white/25 uppercase tracking-wider block mb-1">Callback Date</label>
+                  <input
+                    type="date"
+                    value={callbackDate}
+                    onChange={(e) => setCallbackDate(e.target.value)}
+                    className="input-glass w-full px-3 py-2 text-sm"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="text-[10px] text-white/25 uppercase tracking-wider block mb-1">Callback Time</label>
+                  <input
+                    type="time"
+                    value={callbackTime}
+                    onChange={(e) => setCallbackTime(e.target.value)}
+                    className="input-glass w-full px-3 py-2 text-sm"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Interested: Book Appointment */}
+            {selectedDisposition === 'interested' && (
+              <button className="px-4 py-2 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs hover:bg-emerald-500/25 transition-colors">
+                <svg className="w-4 h-4 inline mr-1.5 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                </svg>
+                Book Appointment
+              </button>
+            )}
+
+            {/* Not Interested: nurture toggle */}
+            {selectedDisposition === 'not_interested' && (
+              <label className="flex items-center gap-3 cursor-pointer">
+                <div
+                  className={`w-10 h-5 rounded-full transition-colors relative ${
+                    nurtureToggle ? 'bg-amber-500/40' : 'bg-white/10'
+                  }`}
+                  onClick={() => setNurtureToggle(!nurtureToggle)}
+                >
+                  <div
+                    className={`absolute top-0.5 w-4 h-4 rounded-full transition-all ${
+                      nurtureToggle ? 'left-[22px] bg-amber-400' : 'left-0.5 bg-white/40'
+                    }`}
+                  />
+                </div>
+                <span className="text-xs text-white/60">Add to 90-day nurture sequence</span>
+              </label>
+            )}
+
+            {/* DNC Request: confirmation */}
+            {selectedDisposition === 'dnc_request' && (
+              <div>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={dncConfirmed}
+                    onChange={(e) => setDncConfirmed(e.target.checked)}
+                    className="w-4 h-4 rounded border-red-500/30 bg-red-500/10 text-red-500 accent-red-500"
+                  />
+                  <span className="text-xs text-red-400">
+                    I confirm this lead requested to be added to the Do Not Call list
+                  </span>
+                </label>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Save Button */}
+        <div className="flex items-center justify-between">
+          <div className="text-[10px] text-white/15">
+            {selectedDisposition
+              ? `Selected: ${DISPOSITION_OPTIONS.find((o) => o.value === selectedDisposition)?.label}`
+              : 'Select a disposition above'}
+          </div>
+          <button
+            disabled={
+              !selectedDisposition ||
+              dispositionSaving ||
+              (selectedDisposition === 'dnc_request' && !dncConfirmed) ||
+              (selectedDisposition === 'callback_requested' && (!callbackDate || !callbackTime))
+            }
+            onClick={async () => {
+              if (!selectedDisposition) return;
+              setDispositionSaving(true);
+              try {
+                const body: Record<string, unknown> = {
+                  disposition: selectedDisposition,
+                };
+                if (selectedDisposition === 'callback_requested') {
+                  body.callback_date = callbackDate;
+                  body.callback_time = callbackTime;
+                }
+                if (selectedDisposition === 'not_interested') {
+                  body.nurture_90day = nurtureToggle;
+                }
+                if (selectedDisposition === 'dnc_request') {
+                  body.dnc_confirmed = dncConfirmed;
+                }
+                await apiFetch(`/calls/${callId}/disposition`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(body),
+                });
+                setDispositionSaved(true);
+              } catch {
+                // will retry
+              }
+              setDispositionSaving(false);
+            }}
+            className={`px-5 py-2.5 rounded-lg text-xs font-medium transition-all ${
+              !selectedDisposition || dispositionSaving || (selectedDisposition === 'dnc_request' && !dncConfirmed)
+                ? 'bg-white/5 border border-white/[0.06] text-white/20 cursor-not-allowed'
+                : 'bg-blue-500/15 border border-blue-500/30 text-blue-400 hover:bg-blue-500/25'
+            }`}
+          >
+            {dispositionSaving ? 'Saving...' : dispositionSaved ? 'Saved' : 'Save Disposition'}
+          </button>
         </div>
       </div>
     </div>

@@ -27,6 +27,7 @@ interface LeadInfo {
 
 type ScriptState = 'GREETING' | 'DISCOVERY' | 'QUALIFICATION' | 'PRESENTATION' | 'OBJECTION_HANDLING' | 'CLOSING' | 'WRAP_UP';
 type SentimentLevel = 'very_positive' | 'positive' | 'neutral' | 'negative' | 'very_negative';
+type ActiveSpeaker = 'agent' | 'lead' | 'none';
 
 interface ActiveCall {
   callId: string;
@@ -37,6 +38,77 @@ interface ActiveCall {
   direction: 'inbound' | 'outbound';
   campaignName: string | null;
   scriptName: string;
+}
+
+// ── Audio Visualizer ────────────────────────────────────────────────────────
+
+function AudioVisualizer({ active, muted }: { active: boolean; muted: boolean }) {
+  const barCount = 12;
+  const isLive = active && !muted;
+  return (
+    <div className="flex items-end gap-[3px] h-8">
+      {Array.from({ length: barCount }).map((_, i) => {
+        const delay = `${(i * 0.08).toFixed(2)}s`;
+        const minH = 15 + (i % 3) * 5;
+        const maxH = 50 + ((i * 7 + 3) % 50);
+        return (
+          <div
+            key={i}
+            className="w-[3px] rounded-full transition-colors duration-300"
+            style={{
+              backgroundColor: isLive ? '#10b981' : 'rgba(255,255,255,0.12)',
+              height: isLive ? undefined : `${minH}%`,
+              animation: isLive ? `eqBounce 0.6s ease-in-out ${delay} infinite alternate` : 'none',
+              minHeight: isLive ? `${minH}%` : undefined,
+              maxHeight: isLive ? `${maxH}%` : undefined,
+            }}
+          />
+        );
+      })}
+      <style jsx>{`
+        @keyframes eqBounce {
+          0% { height: 15%; }
+          100% { height: 90%; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// ── Speaker Indicator ───────────────────────────────────────────────────────
+
+function SpeakerIndicator({ activeSpeaker }: { activeSpeaker: ActiveSpeaker }) {
+  const speakers: { key: ActiveSpeaker; label: string; color: string; glowColor: string }[] = [
+    { key: 'agent', label: 'AI', color: '#3B82F6', glowColor: 'rgba(59,130,246,0.4)' },
+    { key: 'lead', label: 'Lead', color: '#F59E0B', glowColor: 'rgba(245,158,11,0.4)' },
+  ];
+  return (
+    <div className="flex items-center gap-3">
+      {speakers.map((s) => {
+        const isActive = activeSpeaker === s.key;
+        return (
+          <div key={s.key} className="flex items-center gap-1.5">
+            <div
+              className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-all duration-300"
+              style={{
+                backgroundColor: isActive ? `${s.color}30` : 'rgba(255,255,255,0.04)',
+                color: isActive ? s.color : 'rgba(255,255,255,0.25)',
+                boxShadow: isActive ? `0 0 12px ${s.glowColor}, 0 0 4px ${s.glowColor}` : 'none',
+              }}
+            >
+              {s.label}
+            </div>
+            {isActive && (
+              <span
+                className="w-1.5 h-1.5 rounded-full animate-pulse"
+                style={{ backgroundColor: s.color }}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 // ── Script State Config ─────────────────────────────────────────────────────
@@ -75,10 +147,12 @@ function LiveCallContent() {
   const [whisperText, setWhisperText] = useState('');
   const [whisperSending, setWhisperSending] = useState(false);
   const [aiMuted, setAiMuted] = useState(false);
+  const [activeSpeaker, setActiveSpeaker] = useState<ActiveSpeaker>('none');
 
   const wsRef = useRef<WebSocket | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const speakerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // ── Connect to WebSocket ──────────────────────────────────────────────────
 
@@ -106,6 +180,10 @@ function LiveCallContent() {
               }
               return [...prev, msg.data];
             });
+            // Track active speaker
+            setActiveSpeaker(msg.data.speaker === 'agent' ? 'agent' : 'lead');
+            if (speakerTimeoutRef.current) clearTimeout(speakerTimeoutRef.current);
+            speakerTimeoutRef.current = setTimeout(() => setActiveSpeaker('none'), 3000);
           } else if (msg.type === 'state_change') {
             setActiveCall((prev) => prev ? { ...prev, scriptState: msg.data.state } : prev);
           } else if (msg.type === 'sentiment_update') {
@@ -130,6 +208,7 @@ function LiveCallContent() {
         wsRef.current.close();
         wsRef.current = null;
       }
+      if (speakerTimeoutRef.current) clearTimeout(speakerTimeoutRef.current);
     };
   }, [callIdParam]);
 
@@ -271,8 +350,10 @@ function LiveCallContent() {
           </div>
         </div>
 
-        {/* Timer + Status */}
+        {/* Visualizer + Speaker + Timer + Status */}
         <div className="flex items-center gap-4">
+          <SpeakerIndicator activeSpeaker={activeSpeaker} />
+          <AudioVisualizer active={!!activeCall && connected} muted={aiMuted} />
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             <span className="text-red-400 text-xs uppercase tracking-wider font-medium">LIVE</span>
