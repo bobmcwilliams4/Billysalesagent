@@ -91,14 +91,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             onMouseLeave={() => setSidebarOpen(false)}
             className={`${sidebarOpen ? 'w-56' : 'w-16'} transition-all duration-200 ease-out flex flex-col glass-sidebar relative z-30`}
           >
-            {/* Sidebar Logo — symbol only, theme-aware */}
-            <div className="border-b border-[--border-base] flex items-center justify-center h-[72px] px-2">
-              <Image
+            {/* Sidebar Logo — theme-aware */}
+            <div className="border-b border-[--border-base] flex items-center justify-center h-[80px] overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={theme === 'dark' ? '/ept-logo-dark.png' : '/ept-logo-light.png'}
                 alt="EPT"
-                width={120}
-                height={60}
-                className="shrink-0 object-contain h-[52px] w-auto"
+                style={{ height: '60px', width: 'auto', maxWidth: 'none' }}
               />
             </div>
 
@@ -144,7 +143,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* Main Content */}
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Top Bar */}
-            <header className="h-16 glass-topbar flex items-center justify-between px-6 relative">
+            <header className="h-[72px] glass-topbar flex items-center justify-between px-6 relative">
               {/* Left — page title + live dot */}
               <div className="flex items-center gap-4 z-10">
                 <h1 className="font-orbitron text-xs text-[--text-48] tracking-[0.15em] uppercase">
@@ -158,13 +157,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
               {/* Center — large logo, switches with theme */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={theme === 'dark' ? '/ept-logo-dark.png' : '/ept-logo-light.png'}
                   alt="Echo Prime Technologies"
-                  width={400}
-                  height={80}
-                  className="h-12 w-auto object-contain"
-                  priority
+                  style={{ height: '52px', width: 'auto' }}
                 />
               </div>
 
