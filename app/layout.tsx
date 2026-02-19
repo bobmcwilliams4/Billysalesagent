@@ -91,19 +91,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             onMouseLeave={() => setSidebarOpen(false)}
             className={`${sidebarOpen ? 'w-56' : 'w-16'} transition-all duration-200 ease-out flex flex-col glass-sidebar relative z-30`}
           >
-            {/* Logo */}
-            <div className="p-4 border-b border-[--border-base] flex items-center gap-3 h-[60px]">
+            {/* Sidebar Logo — symbol only */}
+            <div className="border-b border-[--border-base] flex items-center justify-center h-[60px]">
               <Image
                 src="/ept-logo.png"
-                alt="Echo Prime Technologies"
-                width={32}
-                height={32}
-                className="shrink-0 rounded-lg"
+                alt="EPT"
+                width={40}
+                height={40}
+                className="shrink-0 rounded-xl"
               />
-              <div className={`overflow-hidden transition-all duration-200 ${sidebarOpen ? 'w-32 opacity-100' : 'w-0 opacity-0'}`}>
-                <span className="font-orbitron text-sm text-[--text-100] tracking-wider whitespace-nowrap">BillyMC</span>
-                <p className="text-[9px] text-[--text-24] tracking-widest uppercase whitespace-nowrap">AI Sales Platform</p>
-              </div>
             </div>
 
             {/* Nav */}
@@ -148,8 +144,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* Main Content */}
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Top Bar */}
-            <header className="h-14 glass-topbar flex items-center justify-between px-6">
-              <div className="flex items-center gap-4">
+            <header className="h-14 glass-topbar flex items-center justify-between px-6 relative">
+              {/* Left — page title + live dot */}
+              <div className="flex items-center gap-4 z-10">
                 <h1 className="font-orbitron text-xs text-[--text-48] tracking-[0.15em] uppercase">
                   {NAV_ITEMS.find(n => n.exact ? pathname === n.href : (n.href === '/' ? pathname === '/' : pathname.startsWith(n.href)))?.label || 'BillyMC'}
                 </h1>
@@ -158,7 +155,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <span className="text-[10px] font-medium text-emerald-500 dark:text-emerald-400/80 tracking-wider uppercase">Live</span>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+
+              {/* Center — large logo */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <Image
+                  src="/ept-logo.png"
+                  alt="Echo Prime Technologies"
+                  width={200}
+                  height={40}
+                  className="h-8 w-auto object-contain"
+                  priority
+                />
+              </div>
+
+              {/* Right — controls */}
+              <div className="flex items-center gap-3 z-10">
                 {/* Theme Toggle */}
                 <button onClick={toggleTheme} className="w-8 h-8 rounded-lg flex items-center justify-center text-[--text-48] hover:text-[--text-100] hover:bg-[--glass-bg-hover] transition-all" title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
                   {theme === 'dark' ? (
