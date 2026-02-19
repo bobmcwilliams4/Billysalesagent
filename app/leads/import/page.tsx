@@ -144,7 +144,7 @@ function FileIcon() {
   );
 }
 
-function StepIndicator({ current, total }: { current: WizardStep; total: number }) {
+function StepIndicator({ current }: { current: WizardStep; total: number }) {
   const steps = ['Upload', 'Map Columns', 'Preview', 'Import'];
   return (
     <div className="flex items-center justify-center gap-2 mb-8">
@@ -158,18 +158,18 @@ function StepIndicator({ current, total }: { current: WizardStep; total: number 
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
                 isComplete ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
                 isActive ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
-                'bg-white/5 text-gray-600 border border-white/5'
+                'bg-white/5 text-white/15 border border-white/[0.04]'
               }`}>
                 {isComplete ? <CheckIcon /> : stepNum}
               </div>
               <span className={`text-xs hidden sm:inline ${
-                isActive ? 'text-white' : isComplete ? 'text-emerald-400' : 'text-gray-600'
+                isActive ? 'text-white/90' : isComplete ? 'text-emerald-400' : 'text-white/15'
               }`}>
                 {label}
               </span>
             </div>
             {idx < steps.length - 1 && (
-              <div className={`w-8 h-px ${isComplete ? 'bg-emerald-500/30' : 'bg-white/5'}`} />
+              <div className={`w-8 h-px ${isComplete ? 'bg-emerald-500/30' : 'bg-white/[0.04]'}`} />
             )}
           </div>
         );
@@ -255,7 +255,7 @@ function Step1Upload({ onDataParsed }: {
     <div className="space-y-6">
       {/* File Upload */}
       <div>
-        <h3 className="text-sm font-medium text-gray-300 mb-3">Upload CSV File</h3>
+        <h3 className="text-sm font-medium text-white/60 mb-3">Upload CSV File</h3>
         <div
           onDragOver={e => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
@@ -266,9 +266,9 @@ function Step1Upload({ onDataParsed }: {
           }`}
         >
           <div className="flex flex-col items-center gap-3">
-            <div className="text-gray-500"><UploadIcon /></div>
+            <div className="text-white/25"><UploadIcon /></div>
             <div>
-              <p className="text-sm text-gray-300">
+              <p className="text-sm text-white/60">
                 {fileName ? (
                   <span className="flex items-center gap-2 justify-center">
                     <FileIcon /> {fileName}
@@ -277,7 +277,7 @@ function Step1Upload({ onDataParsed }: {
                   <>Drop your CSV or JSON file here, or <span className="text-blue-400">browse</span></>
                 )}
               </p>
-              <p className="text-xs text-gray-600 mt-1">Supports .csv and .json files</p>
+              <p className="text-xs text-white/15 mt-1">Supports .csv and .json files</p>
             </div>
           </div>
           <input
@@ -295,14 +295,14 @@ function Step1Upload({ onDataParsed }: {
 
       {/* Divider */}
       <div className="flex items-center gap-4">
-        <div className="flex-1 h-px bg-white/5" />
-        <span className="text-xs text-gray-600">OR</span>
-        <div className="flex-1 h-px bg-white/5" />
+        <div className="flex-1 h-px bg-white/[0.04]" />
+        <span className="text-xs text-white/15">OR</span>
+        <div className="flex-1 h-px bg-white/[0.04]" />
       </div>
 
       {/* JSON Paste */}
       <div>
-        <h3 className="text-sm font-medium text-gray-300 mb-3">Paste JSON Data</h3>
+        <h3 className="text-sm font-medium text-white/60 mb-3">Paste JSON Data</h3>
         <textarea
           value={jsonInput}
           onChange={e => setJsonInput(e.target.value)}
@@ -311,7 +311,7 @@ function Step1Upload({ onDataParsed }: {
   { "first_name": "Jane", "last_name": "Smith", "phone": "(432) 555-0200" }
 ]`}
           rows={8}
-          className="w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/10 text-white text-sm font-mono focus:outline-none focus:border-blue-500/40 transition-colors resize-none placeholder-gray-700"
+          className="w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/10 text-white/90 text-sm font-mono focus:outline-none focus:border-blue-500/40 transition-colors resize-none placeholder-white/15"
         />
         <button onClick={handlePasteJSON}
           className="mt-3 px-4 py-2 rounded-lg text-sm bg-blue-600/20 text-blue-400 border border-blue-500/20 hover:border-blue-500/40 transition-colors">
@@ -327,9 +327,9 @@ function Step1Upload({ onDataParsed }: {
       )}
 
       {/* Help */}
-      <div className="rounded-xl bg-white/[0.02] border border-white/5 p-4">
-        <h4 className="text-xs text-gray-500 uppercase tracking-wider mb-2">CSV Format Example</h4>
-        <pre className="text-xs text-gray-400 font-mono overflow-x-auto">
+      <div className="glass-panel p-4">
+        <h4 className="text-xs text-white/25 uppercase tracking-wider mb-2">CSV Format Example</h4>
+        <pre className="text-xs text-white/40 font-mono overflow-x-auto">
 {`first_name,last_name,phone,email,company,source
 Maria,Gonzalez,(432) 555-0147,maria@email.com,Auto Body,Facebook Ads
 James,Patterson,(432) 555-0291,james@ops.com,Permian Ops LLC,Google Ads`}
@@ -339,7 +339,7 @@ James,Patterson,(432) 555-0291,james@ops.com,Permian Ops LLC,Google Ads`}
   );
 }
 
-function Step2Mapping({ headers, mappings, onChange }: {
+function Step2Mapping({ mappings, onChange }: {
   headers: string[];
   mappings: ColumnMapping[];
   onChange: (mappings: ColumnMapping[]) => void;
@@ -358,8 +358,8 @@ function Step2Mapping({ headers, mappings, onChange }: {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-medium text-gray-300">Map Your Columns</h3>
-          <p className="text-xs text-gray-500 mt-1">We auto-detected some mappings. Adjust as needed.</p>
+          <h3 className="text-sm font-medium text-white/60">Map Your Columns</h3>
+          <p className="text-xs text-white/25 mt-1">We auto-detected some mappings. Adjust as needed.</p>
         </div>
         {missingRequired.length > 0 && (
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs">
@@ -376,17 +376,17 @@ function Step2Mapping({ headers, mappings, onChange }: {
           return (
             <div key={mapping.csvColumn}
               className={`flex items-center gap-4 rounded-xl border p-4 transition-colors ${
-                isMapped ? 'border-white/10 bg-white/[0.02]' : 'border-white/5 bg-white/[0.01]'
+                isMapped ? 'border-white/10 bg-white/[0.02]' : 'border-white/[0.04] bg-white/[0.01]'
               }`}>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-300 font-mono">{mapping.csvColumn}</span>
+                  <span className="text-sm text-white/60 font-mono">{mapping.csvColumn}</span>
                   {isRequired && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400">required</span>
                   )}
                 </div>
               </div>
-              <svg className="w-5 h-5 text-gray-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-white/15 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
               <div className="w-48 shrink-0">
@@ -396,11 +396,11 @@ function Step2Mapping({ headers, mappings, onChange }: {
                   className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:border-blue-500/50 transition-colors appearance-none ${
                     isMapped
                       ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                      : 'bg-white/5 border-white/10 text-gray-400'
+                      : 'bg-white/5 border-white/10 text-white/40'
                   }`}
                 >
                   {MAPPABLE_FIELDS.map(f => (
-                    <option key={f.value} value={f.value} className="bg-[#0e0e24] text-gray-300">{f.label}</option>
+                    <option key={f.value} value={f.value} className="bg-[#0e0e24] text-white/60">{f.label}</option>
                   ))}
                 </select>
               </div>
@@ -442,8 +442,8 @@ function Step3Preview({ rows, mappings }: {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-medium text-gray-300">Preview Import</h3>
-          <p className="text-xs text-gray-500 mt-1">Showing first {previewRows.length} of {rows.length} rows</p>
+          <h3 className="text-sm font-medium text-white/60">Preview Import</h3>
+          <p className="text-xs text-white/25 mt-1">Showing first {previewRows.length} of {rows.length} rows</p>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg">
@@ -457,18 +457,18 @@ function Step3Preview({ rows, mappings }: {
         </div>
       </div>
 
-      <div className="rounded-xl border border-white/5 overflow-hidden">
+      <div className="rounded-xl border border-white/[0.04] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/5 bg-white/[0.02]">
-                <th className="text-left text-[10px] text-gray-500 uppercase tracking-wider font-medium px-4 py-3 w-8">#</th>
+              <tr className="border-b border-white/[0.04] bg-white/[0.02]">
+                <th className="text-left text-[10px] text-white/25 uppercase tracking-wider font-medium px-4 py-3 w-8">#</th>
                 {activeMappings.map(m => (
-                  <th key={m.mappedTo} className="text-left text-[10px] text-gray-500 uppercase tracking-wider font-medium px-4 py-3">
+                  <th key={m.mappedTo} className="text-left text-[10px] text-white/25 uppercase tracking-wider font-medium px-4 py-3">
                     {m.mappedTo.replace('_', ' ')}
                   </th>
                 ))}
-                <th className="text-left text-[10px] text-gray-500 uppercase tracking-wider font-medium px-4 py-3">Issues</th>
+                <th className="text-left text-[10px] text-white/25 uppercase tracking-wider font-medium px-4 py-3">Issues</th>
               </tr>
             </thead>
             <tbody>
@@ -476,10 +476,10 @@ function Step3Preview({ rows, mappings }: {
                 const issues = getIssues(row);
                 return (
                   <tr key={idx} className={`border-b border-white/[0.03] ${issues.length > 0 ? 'bg-yellow-500/[0.03]' : ''}`}>
-                    <td className="px-4 py-2.5 text-xs text-gray-600">{idx + 1}</td>
+                    <td className="px-4 py-2.5 text-xs text-white/15">{idx + 1}</td>
                     {activeMappings.map(m => (
-                      <td key={m.mappedTo} className="px-4 py-2.5 text-sm text-gray-300 max-w-[200px] truncate">
-                        {row[m.csvColumn] || <span className="text-gray-600">--</span>}
+                      <td key={m.mappedTo} className="px-4 py-2.5 text-sm text-white/60 max-w-[200px] truncate">
+                        {row[m.csvColumn] || <span className="text-white/15">--</span>}
                       </td>
                     ))}
                     <td className="px-4 py-2.5">
@@ -502,7 +502,7 @@ function Step3Preview({ rows, mappings }: {
       </div>
 
       {rows.length > 10 && (
-        <p className="text-xs text-gray-600 text-center">
+        <p className="text-xs text-white/15 text-center">
           ...and {rows.length - 10} more rows
         </p>
       )}
@@ -529,22 +529,22 @@ function Step4Import({ rows, mappings, result, importing, progress, onImport }: 
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h3 className="text-xl font-bold text-white mb-2">Import Complete</h3>
-          <p className="text-sm text-gray-400">Your leads have been imported successfully.</p>
+          <h3 className="text-xl font-bold text-white/90 tracking-tight mb-2">Import Complete</h3>
+          <p className="text-sm text-white/40">Your leads have been imported successfully.</p>
         </div>
 
         <div className="grid grid-cols-3 gap-4">
-          <div className="rounded-xl border border-white/5 bg-white/[0.02] p-5 text-center">
+          <div className="stat-mini p-5 text-center">
             <p className="text-2xl font-bold text-emerald-400">{result.imported}</p>
-            <p className="text-xs text-gray-500 mt-1">Imported</p>
+            <p className="text-xs text-white/25 mt-1">Imported</p>
           </div>
-          <div className="rounded-xl border border-white/5 bg-white/[0.02] p-5 text-center">
+          <div className="stat-mini p-5 text-center">
             <p className="text-2xl font-bold text-yellow-400">{result.skipped}</p>
-            <p className="text-xs text-gray-500 mt-1">Skipped</p>
+            <p className="text-xs text-white/25 mt-1">Skipped</p>
           </div>
-          <div className="rounded-xl border border-white/5 bg-white/[0.02] p-5 text-center">
+          <div className="stat-mini p-5 text-center">
             <p className="text-2xl font-bold text-blue-400">{result.duplicates}</p>
-            <p className="text-xs text-gray-500 mt-1">Duplicates</p>
+            <p className="text-xs text-white/25 mt-1">Duplicates</p>
           </div>
         </div>
 
@@ -561,11 +561,11 @@ function Step4Import({ rows, mappings, result, importing, progress, onImport }: 
 
         <div className="flex justify-center gap-3">
           <a href="/leads"
-            className="px-6 py-2.5 rounded-xl text-sm text-white bg-blue-600 hover:bg-blue-500 transition-colors">
+            className="px-6 py-2.5 rounded-xl text-sm text-white/90 bg-blue-600 hover:bg-blue-500 transition-colors">
             View Leads
           </a>
           <a href="/leads/import"
-            className="px-6 py-2.5 rounded-xl text-sm text-gray-300 border border-white/10 hover:border-white/20 transition-colors">
+            className="px-6 py-2.5 rounded-xl text-sm text-white/60 border border-white/10 hover:border-white/20 transition-colors">
             Import More
           </a>
         </div>
@@ -575,27 +575,27 @@ function Step4Import({ rows, mappings, result, importing, progress, onImport }: 
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-white/5 bg-white/[0.02] p-6 text-center">
-        <h3 className="text-lg font-semibold text-white mb-2">Ready to Import</h3>
-        <p className="text-sm text-gray-400 mb-4">
+      <div className="glass-panel p-6 text-center">
+        <h3 className="text-lg font-semibold text-white/90 tracking-tight mb-2">Ready to Import</h3>
+        <p className="text-sm text-white/40 mb-4">
           {rows.length} leads will be imported with {activeMappings.length} mapped fields.
         </p>
 
         <div className="grid grid-cols-2 gap-4 max-w-xs mx-auto mb-6">
           <div className="rounded-lg bg-white/[0.03] p-3">
             <p className="text-lg font-bold text-blue-400">{rows.length}</p>
-            <p className="text-[10px] text-gray-500">Total Rows</p>
+            <p className="text-[10px] text-white/25">Total Rows</p>
           </div>
           <div className="rounded-lg bg-white/[0.03] p-3">
             <p className="text-lg font-bold text-cyan-400">{activeMappings.length}</p>
-            <p className="text-[10px] text-gray-500">Mapped Fields</p>
+            <p className="text-[10px] text-white/25">Mapped Fields</p>
           </div>
         </div>
 
         {importing && (
           <div className="max-w-sm mx-auto mb-6">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-gray-400">Importing...</span>
+              <span className="text-xs text-white/40">Importing...</span>
               <span className="text-xs text-blue-400">{Math.round(progress)}%</span>
             </div>
             <div className="w-full h-2 rounded-full bg-white/5 overflow-hidden">
@@ -608,7 +608,7 @@ function Step4Import({ rows, mappings, result, importing, progress, onImport }: 
         )}
 
         <button onClick={onImport} disabled={importing}
-          className="px-8 py-3 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/20">
+          className="px-8 py-3 rounded-xl text-sm font-medium text-white/90 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/20">
           {importing ? (
             <span className="flex items-center gap-2">
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -668,7 +668,6 @@ export default function ImportPage() {
       return lead;
     }).filter(lead => lead.first_name && lead.last_name && lead.phone);
 
-    // Simulate progress while waiting for API
     const progressInterval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 90) {
@@ -680,7 +679,7 @@ export default function ImportPage() {
     }, 300);
 
     try {
-      const res = await apiFetch(`/leads/bulk`, {
+      const res = await apiFetch('/leads/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ leads }),
@@ -699,20 +698,20 @@ export default function ImportPage() {
         });
       } else {
         setResult({
-          imported: leads.length,
-          skipped: rows.length - leads.length,
+          imported: 0,
+          skipped: rows.length,
           duplicates: 0,
-          errors: [],
+          errors: ['Server returned an error. Please try again.'],
         });
       }
     } catch {
       clearInterval(progressInterval);
       setProgress(100);
       setResult({
-        imported: leads.length,
-        skipped: rows.length - leads.length,
+        imported: 0,
+        skipped: rows.length,
         duplicates: 0,
-        errors: [],
+        errors: ['Network error. Please check your connection and try again.'],
       });
     } finally {
       setImporting(false);
@@ -723,22 +722,22 @@ export default function ImportPage() {
   const canProceedStep2 = REQUIRED_FIELDS.every(f => mappedFields.includes(f));
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-gray-100">
+    <div className="min-h-screen bg-surface-1 text-gray-100 animate-fadeInUp">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
         {/* Header */}
         <div className="mb-8">
-          <a href="/leads" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-300 transition-colors mb-4">
+          <a href="/leads" className="inline-flex items-center gap-2 text-sm text-white/25 hover:text-white/60 transition-colors mb-4">
             <BackIcon /> Back to Leads
           </a>
-          <h1 className="text-2xl font-bold text-white">Import Leads</h1>
-          <p className="text-sm text-gray-500 mt-1">Upload a CSV or paste JSON to bulk-import leads</p>
+          <h1 className="text-2xl font-bold text-white/90 tracking-tight">Import Leads</h1>
+          <p className="text-sm text-white/25 mt-1">Upload a CSV or paste JSON to bulk-import leads</p>
         </div>
 
         {/* Step Indicator */}
         <StepIndicator current={step} total={4} />
 
         {/* Step Content */}
-        <div className="rounded-2xl border border-white/5 bg-white/[0.01] p-6 sm:p-8">
+        <div className="rounded-2xl border border-white/[0.04] bg-white/[0.01] p-6 sm:p-8">
           {step === 1 && <Step1Upload onDataParsed={handleDataParsed} />}
           {step === 2 && <Step2Mapping headers={headers} mappings={mappings} onChange={setMappings} />}
           {step === 3 && <Step3Preview rows={rows} mappings={mappings} />}
@@ -759,19 +758,19 @@ export default function ImportPage() {
           <div className="flex items-center justify-between mt-6">
             <button onClick={() => setStep(prev => Math.max(1, prev - 1) as WizardStep)}
               disabled={step === 1}
-              className="px-4 py-2 rounded-lg text-sm text-gray-400 border border-white/10 hover:border-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+              className="px-4 py-2 rounded-lg text-sm text-white/40 border border-white/10 hover:border-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
               Back
             </button>
 
             {step === 2 && (
               <button onClick={handleMappingsDone} disabled={!canProceedStep2}
-                className="px-6 py-2 rounded-lg text-sm text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                className="px-6 py-2 rounded-lg text-sm text-white/90 bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
                 Next: Preview
               </button>
             )}
             {step === 3 && (
               <button onClick={handlePreviewDone}
-                className="px-6 py-2 rounded-lg text-sm text-white bg-blue-600 hover:bg-blue-500 transition-colors">
+                className="px-6 py-2 rounded-lg text-sm text-white/90 bg-blue-600 hover:bg-blue-500 transition-colors">
                 Next: Import
               </button>
             )}

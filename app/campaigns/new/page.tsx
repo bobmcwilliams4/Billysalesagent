@@ -38,16 +38,6 @@ interface CampaignForm {
   retry_delay_hours: number;
 }
 
-// ── Sample Scripts ──────────────────────────────────────────────────────────
-
-const SAMPLE_SCRIPTS: Script[] = [
-  { id: 'script_001', name: 'Real Estate Warm Outreach', description: 'Warm approach for leads who submitted website forms or were referred. Focus on discovery and appointment booking.', type: 'outbound', states_count: 8, updated_at: '2026-02-15T10:00:00Z' },
-  { id: 'script_002', name: 'Inbound Qualification', description: 'Handle inbound calls with structured qualification. Extract budget, timeline, requirements, and pre-approval status.', type: 'inbound', states_count: 7, updated_at: '2026-02-14T16:30:00Z' },
-  { id: 'script_003', name: 'Cold Re-engagement', description: 'Low-pressure re-engagement for cold leads. Updated listings approach with easy opt-out.', type: 'outbound', states_count: 6, updated_at: '2026-02-10T09:00:00Z' },
-  { id: 'script_004', name: 'Appointment Confirmation', description: 'Confirm upcoming appointments, provide directions, and handle rescheduling requests.', type: 'outbound', states_count: 5, updated_at: '2026-02-12T11:00:00Z' },
-  { id: 'script_005', name: 'Commercial Property Pitch', description: 'High-value commercial property pitch customized per lead portfolio. Investment-focused language.', type: 'outbound', states_count: 9, updated_at: '2026-02-13T14:00:00Z' },
-];
-
 const ALL_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const LEAD_STATUSES = ['new', 'warm', 'hot', 'cold', 'qualified', 'unqualified'];
 const LEAD_SOURCES = ['Website Form', 'Referral', 'Zillow', 'Realtor.com', 'Social Media', 'Walk-in', 'Cold List', 'Event'];
@@ -72,7 +62,7 @@ const INITIAL_FORM: CampaignForm = {
 
 // ── Step Indicator ──────────────────────────────────────────────────────────
 
-function StepIndicator({ current, total }: { current: number; total: number }) {
+function StepIndicator({ current }: { current: number; total: number }) {
   const steps = [
     { num: 1, label: 'Basics' },
     { num: 2, label: 'Script' },
@@ -90,9 +80,9 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
           <div key={step.num} className="flex items-center flex-1">
             <div className="flex items-center gap-2">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                isActive ? 'bg-blue-500 text-white' :
+                isActive ? 'bg-blue-500 text-white/90' :
                 isComplete ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                'bg-white/5 text-gray-600 border border-white/10'
+                'bg-white/5 text-white/15 border border-white/10'
               }`}>
                 {isComplete ? (
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -100,12 +90,12 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
                   </svg>
                 ) : step.num}
               </div>
-              <span className={`text-xs hidden sm:inline ${isActive ? 'text-blue-400 font-medium' : isComplete ? 'text-emerald-400' : 'text-gray-600'}`}>
+              <span className={`text-xs hidden sm:inline ${isActive ? 'text-blue-400 font-medium' : isComplete ? 'text-emerald-400' : 'text-white/15'}`}>
                 {step.label}
               </span>
             </div>
             {i < steps.length - 1 && (
-              <div className={`flex-1 h-px mx-3 ${isComplete ? 'bg-emerald-500/30' : 'bg-white/5'}`} />
+              <div className={`flex-1 h-px mx-3 ${isComplete ? 'bg-emerald-500/30' : 'bg-white/[0.04]'}`} />
             )}
           </div>
         );
@@ -129,7 +119,7 @@ function PillSelect({ options, selected, onToggle, color = 'blue' }: { options: 
             className={`px-3 py-1.5 rounded-lg text-xs transition-colors border ${
               active
                 ? `bg-${color}-500/15 text-${color}-400 border-${color}-500/30`
-                : 'bg-white/[0.02] text-gray-500 border-white/5 hover:border-white/10 hover:text-gray-300'
+                : 'bg-white/[0.02] text-white/25 border-white/[0.04] hover:border-white/10 hover:text-white/60'
             }`}
             style={active ? {
               backgroundColor: `rgba(${color === 'blue' ? '59,130,246' : color === 'emerald' ? '16,185,129' : color === 'purple' ? '139,92,246' : '59,130,246'}, 0.15)`,
@@ -151,7 +141,7 @@ export default function NewCampaignPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<CampaignForm>(INITIAL_FORM);
-  const [scripts, setScripts] = useState<Script[]>(SAMPLE_SCRIPTS);
+  const [scripts, setScripts] = useState<Script[]>([]);
   const [leadCount, setLeadCount] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -185,12 +175,7 @@ export default function NewCampaignPage() {
           setLeadCount(json.total || 0);
         }
       } catch {
-        // Estimate from filters for demo
-        let count = 500;
-        if (form.lead_filter.status.length) count = Math.floor(count * (form.lead_filter.status.length / LEAD_STATUSES.length));
-        if (form.lead_filter.source.length) count = Math.floor(count * (form.lead_filter.source.length / LEAD_SOURCES.length));
-        if (form.lead_filter.tags.length) count = Math.floor(count * 0.6);
-        setLeadCount(Math.max(count, 0));
+        setLeadCount(0);
       }
     }
     estimateLeads();
@@ -226,7 +211,7 @@ export default function NewCampaignPage() {
     switch (step) {
       case 1: return form.name.trim().length > 0;
       case 2: return form.script_id.length > 0;
-      case 3: return true; // Leads are optional filters
+      case 3: return true;
       case 4: return form.calling_days.length > 0 && form.schedule_start.length > 0;
       case 5: return form.max_concurrent > 0 && form.calls_per_hour > 0;
       case 6: return true;
@@ -239,7 +224,6 @@ export default function NewCampaignPage() {
     setSubmitting(true);
     setError(null);
     try {
-      // Create campaign
       const createRes = await apiFetch(`/campaigns`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -269,7 +253,6 @@ export default function NewCampaignPage() {
         const json = await createRes.json();
         const campaignId = json.data?.id || json.id;
         if (campaignId) {
-          // Start campaign
           await apiFetch(`/campaigns/${campaignId}/start`, { method: 'POST' });
         }
         router.push('/campaigns');
@@ -278,27 +261,26 @@ export default function NewCampaignPage() {
         setError(errJson?.error || 'Failed to create campaign');
       }
     } catch {
-      // Demo mode: just redirect
-      router.push('/campaigns');
+      setError('Failed to create campaign. Please try again.');
     }
     setSubmitting(false);
   };
 
-  const inputClass = 'w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition-colors';
-  const labelClass = 'block text-xs text-gray-400 mb-1.5';
+  const inputClass = 'w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-sm text-white/90 placeholder-white/25 focus:outline-none focus:border-blue-500/50 transition-colors';
+  const labelClass = 'block text-xs text-white/40 mb-1.5';
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6 animate-fadeInUp">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <button onClick={() => router.back()} className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors">
+        <button onClick={() => router.back()} className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-white/90 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
           </svg>
         </button>
         <div>
-          <h2 className="text-xl font-bold text-white">New Campaign</h2>
-          <p className="text-sm text-gray-500">Step {step} of 6</p>
+          <h2 className="text-xl font-bold text-white/90 tracking-tight">New Campaign</h2>
+          <p className="text-sm text-white/25">Step {step} of 6</p>
         </div>
       </div>
 
@@ -306,12 +288,12 @@ export default function NewCampaignPage() {
       <StepIndicator current={step} total={6} />
 
       {/* Step Content */}
-      <div className="rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-sm p-6">
+      <div className="glass-panel p-6">
 
-        {/* ─── Step 1: Basics ──────────────────────────────────────────── */}
+        {/* Step 1: Basics */}
         {step === 1 && (
           <div className="space-y-5">
-            <h3 className="text-lg font-medium text-white">Campaign Basics</h3>
+            <h3 className="text-lg font-medium text-white/90 tracking-tight">Campaign Basics</h3>
             <div>
               <label className={labelClass}>Campaign Name *</label>
               <input
@@ -341,14 +323,14 @@ export default function NewCampaignPage() {
                       className={`p-4 rounded-lg border text-center transition-colors ${
                         active
                           ? 'bg-blue-500/15 border-blue-500/30 text-blue-400'
-                          : 'bg-white/[0.02] border-white/5 text-gray-500 hover:border-white/10'
+                          : 'bg-white/[0.02] border-white/[0.04] text-white/25 hover:border-white/10'
                       }`}
                     >
                       <svg className="w-6 h-6 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d={cfg.icon} />
                       </svg>
                       <p className="text-sm font-medium capitalize">{t}</p>
-                      <p className="text-[10px] text-gray-600 mt-0.5">{cfg.desc}</p>
+                      <p className="text-[10px] text-white/15 mt-0.5">{cfg.desc}</p>
                     </button>
                   );
                 })}
@@ -367,11 +349,17 @@ export default function NewCampaignPage() {
           </div>
         )}
 
-        {/* ─── Step 2: Script Selection ───────────────────────────────── */}
+        {/* Step 2: Script Selection */}
         {step === 2 && (
           <div className="space-y-5">
-            <h3 className="text-lg font-medium text-white">Select Script</h3>
-            <p className="text-sm text-gray-500">Choose the AI conversation script for this campaign.</p>
+            <h3 className="text-lg font-medium text-white/90 tracking-tight">Select Script</h3>
+            <p className="text-sm text-white/25">Choose the AI conversation script for this campaign.</p>
+            {scripts.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-sm text-white/25">No scripts found. Create a script first.</p>
+                <a href="/scripts" className="text-xs text-blue-400 hover:text-blue-300 mt-2 inline-block">Go to Scripts</a>
+              </div>
+            )}
             <div className="space-y-3">
               {scripts.map((script) => {
                 const active = form.script_id === script.id;
@@ -383,7 +371,7 @@ export default function NewCampaignPage() {
                     className={`w-full text-left p-4 rounded-lg border transition-colors ${
                       active
                         ? 'bg-blue-500/10 border-blue-500/30'
-                        : 'bg-white/[0.02] border-white/5 hover:border-white/10'
+                        : 'bg-white/[0.02] border-white/[0.04] hover:border-white/10'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
@@ -393,14 +381,14 @@ export default function NewCampaignPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                         )}
-                        <span className={`text-sm font-medium ${active ? 'text-blue-400' : 'text-white'}`}>{script.name}</span>
+                        <span className={`text-sm font-medium ${active ? 'text-blue-400' : 'text-white/90'}`}>{script.name}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 rounded text-[10px] bg-white/5 text-gray-400 capitalize">{script.type}</span>
-                        <span className="text-[10px] text-gray-600">{script.states_count} states</span>
+                        <span className="px-2 py-0.5 rounded text-[10px] bg-white/5 text-white/40 capitalize">{script.type}</span>
+                        <span className="text-[10px] text-white/15">{script.states_count} states</span>
                       </div>
                     </div>
-                    <p className="text-xs text-gray-500 leading-relaxed">{script.description}</p>
+                    <p className="text-xs text-white/25 leading-relaxed">{script.description}</p>
                   </button>
                 );
               })}
@@ -408,13 +396,13 @@ export default function NewCampaignPage() {
           </div>
         )}
 
-        {/* ─── Step 3: Lead Selection ─────────────────────────────────── */}
+        {/* Step 3: Lead Selection */}
         {step === 3 && (
           <div className="space-y-5">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-medium text-white">Lead Selection</h3>
-                <p className="text-sm text-gray-500">Filter which leads to include in this campaign.</p>
+                <h3 className="text-lg font-medium text-white/90 tracking-tight">Lead Selection</h3>
+                <p className="text-sm text-white/25">Filter which leads to include in this campaign.</p>
               </div>
               <div className="px-4 py-2 rounded-lg bg-blue-500/15 border border-blue-500/30">
                 <span className="text-sm text-blue-400 font-bold">{leadCount}</span>
@@ -431,7 +419,7 @@ export default function NewCampaignPage() {
                 color="emerald"
               />
               {form.lead_filter.status.length === 0 && (
-                <p className="text-[10px] text-gray-600 mt-1">No filter = all statuses included</p>
+                <p className="text-[10px] text-white/15 mt-1">No filter = all statuses included</p>
               )}
             </div>
 
@@ -457,10 +445,10 @@ export default function NewCampaignPage() {
           </div>
         )}
 
-        {/* ─── Step 4: Schedule ───────────────────────────────────────── */}
+        {/* Step 4: Schedule */}
         {step === 4 && (
           <div className="space-y-5">
-            <h3 className="text-lg font-medium text-white">Schedule</h3>
+            <h3 className="text-lg font-medium text-white/90 tracking-tight">Schedule</h3>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -517,7 +505,7 @@ export default function NewCampaignPage() {
                       className={`flex-1 py-2.5 rounded-lg text-xs font-medium transition-colors border ${
                         active
                           ? 'bg-blue-500/15 text-blue-400 border-blue-500/30'
-                          : 'bg-white/[0.02] text-gray-600 border-white/5 hover:border-white/10 hover:text-gray-400'
+                          : 'bg-white/[0.02] text-white/15 border-white/[0.04] hover:border-white/10 hover:text-white/40'
                       }`}
                     >
                       {day}
@@ -529,10 +517,10 @@ export default function NewCampaignPage() {
           </div>
         )}
 
-        {/* ─── Step 5: Pacing ─────────────────────────────────────────── */}
+        {/* Step 5: Pacing */}
         {step === 5 && (
           <div className="space-y-6">
-            <h3 className="text-lg font-medium text-white">Pacing & Retry Policy</h3>
+            <h3 className="text-lg font-medium text-white/90 tracking-tight">Pacing & Retry Policy</h3>
 
             {/* Max Concurrent */}
             <div>
@@ -548,7 +536,7 @@ export default function NewCampaignPage() {
                 onChange={(e) => updateForm('max_concurrent', parseInt(e.target.value))}
                 className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-500 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:cursor-pointer"
               />
-              <div className="flex justify-between text-[10px] text-gray-600 mt-1">
+              <div className="flex justify-between text-[10px] text-white/15 mt-1">
                 <span>1 (cautious)</span>
                 <span>5 (aggressive)</span>
               </div>
@@ -569,15 +557,15 @@ export default function NewCampaignPage() {
                 onChange={(e) => updateForm('calls_per_hour', parseInt(e.target.value))}
                 className="w-full h-2 bg-white/5 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-500 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:cursor-pointer"
               />
-              <div className="flex justify-between text-[10px] text-gray-600 mt-1">
+              <div className="flex justify-between text-[10px] text-white/15 mt-1">
                 <span>10/hr</span>
                 <span>60/hr</span>
               </div>
             </div>
 
             {/* Retry Policy */}
-            <div className="rounded-lg border border-white/5 bg-white/[0.02] p-4 space-y-4">
-              <h4 className="text-sm font-medium text-white">Retry Policy</h4>
+            <div className="stat-mini p-4 space-y-4">
+              <h4 className="text-sm font-medium text-white/90">Retry Policy</h4>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelClass}>Max Retries per Lead</label>
@@ -590,7 +578,7 @@ export default function NewCampaignPage() {
                       onChange={(e) => updateForm('max_retries', parseInt(e.target.value))}
                       className="flex-1 h-2 bg-white/5 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-500 [&::-webkit-slider-thumb]:appearance-none"
                     />
-                    <span className="text-sm text-white font-mono w-6 text-right">{form.max_retries}</span>
+                    <span className="text-sm text-white/90 font-mono w-6 text-right">{form.max_retries}</span>
                   </div>
                 </div>
                 <div>
@@ -604,7 +592,7 @@ export default function NewCampaignPage() {
                       onChange={(e) => updateForm('retry_delay_hours', parseInt(e.target.value))}
                       className="flex-1 h-2 bg-white/5 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-500 [&::-webkit-slider-thumb]:appearance-none"
                     />
-                    <span className="text-sm text-white font-mono w-8 text-right">{form.retry_delay_hours}h</span>
+                    <span className="text-sm text-white/90 font-mono w-8 text-right">{form.retry_delay_hours}h</span>
                   </div>
                 </div>
               </div>
@@ -620,16 +608,16 @@ export default function NewCampaignPage() {
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <p className="text-[10px] text-gray-500">Per Hour</p>
-                  <p className="text-sm text-white font-mono">{form.calls_per_hour} calls</p>
+                  <p className="text-[10px] text-white/25">Per Hour</p>
+                  <p className="text-sm text-white/90 font-mono">{form.calls_per_hour} calls</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-gray-500">Per Day ({form.calling_hours_end && form.calling_hours_start ? (() => {
+                  <p className="text-[10px] text-white/25">Per Day ({form.calling_hours_end && form.calling_hours_start ? (() => {
                     const [sh, sm] = form.calling_hours_start.split(':').map(Number);
                     const [eh, em] = form.calling_hours_end.split(':').map(Number);
                     return (eh * 60 + em - sh * 60 - sm) / 60;
                   })() : 8}h)</p>
-                  <p className="text-sm text-white font-mono">
+                  <p className="text-sm text-white/90 font-mono">
                     {(() => {
                       const [sh, sm] = form.calling_hours_start.split(':').map(Number);
                       const [eh, em] = form.calling_hours_end.split(':').map(Number);
@@ -639,8 +627,8 @@ export default function NewCampaignPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-gray-500">Days to Complete</p>
-                  <p className="text-sm text-white font-mono">
+                  <p className="text-[10px] text-white/25">Days to Complete</p>
+                  <p className="text-sm text-white/90 font-mono">
                     {leadCount > 0 ? (() => {
                       const [sh, sm] = form.calling_hours_start.split(':').map(Number);
                       const [eh, em] = form.calling_hours_end.split(':').map(Number);
@@ -657,10 +645,10 @@ export default function NewCampaignPage() {
           </div>
         )}
 
-        {/* ─── Step 6: Review & Launch ────────────────────────────────── */}
+        {/* Step 6: Review & Launch */}
         {step === 6 && (
           <div className="space-y-5">
-            <h3 className="text-lg font-medium text-white">Review & Launch</h3>
+            <h3 className="text-lg font-medium text-white/90 tracking-tight">Review & Launch</h3>
 
             {error && (
               <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
@@ -670,39 +658,39 @@ export default function NewCampaignPage() {
 
             <div className="space-y-4">
               {/* Campaign Basics */}
-              <div className="rounded-lg border border-white/5 bg-white/[0.02] p-4">
-                <h4 className="text-xs text-gray-500 uppercase tracking-wider mb-3">Campaign</h4>
+              <div className="stat-mini p-4">
+                <h4 className="text-xs text-white/25 uppercase tracking-wider mb-3">Campaign</h4>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-[10px] text-gray-600">Name</p>
-                    <p className="text-sm text-white">{form.name || '--'}</p>
+                    <p className="text-[10px] text-white/15">Name</p>
+                    <p className="text-sm text-white/90">{form.name || '--'}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-600">Type</p>
-                    <p className="text-sm text-white capitalize">{form.type}</p>
+                    <p className="text-[10px] text-white/15">Type</p>
+                    <p className="text-sm text-white/90 capitalize">{form.type}</p>
                   </div>
                   {form.description && (
                     <div className="col-span-2">
-                      <p className="text-[10px] text-gray-600">Description</p>
-                      <p className="text-sm text-gray-400">{form.description}</p>
+                      <p className="text-[10px] text-white/15">Description</p>
+                      <p className="text-sm text-white/40">{form.description}</p>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Script */}
-              <div className="rounded-lg border border-white/5 bg-white/[0.02] p-4">
-                <h4 className="text-xs text-gray-500 uppercase tracking-wider mb-3">Script</h4>
-                <p className="text-sm text-white">{selectedScript?.name || '--'}</p>
-                {selectedScript && <p className="text-xs text-gray-500 mt-0.5">{selectedScript.description}</p>}
+              <div className="stat-mini p-4">
+                <h4 className="text-xs text-white/25 uppercase tracking-wider mb-3">Script</h4>
+                <p className="text-sm text-white/90">{selectedScript?.name || '--'}</p>
+                {selectedScript && <p className="text-xs text-white/25 mt-0.5">{selectedScript.description}</p>}
               </div>
 
               {/* Leads */}
-              <div className="rounded-lg border border-white/5 bg-white/[0.02] p-4">
-                <h4 className="text-xs text-gray-500 uppercase tracking-wider mb-3">Leads</h4>
+              <div className="stat-mini p-4">
+                <h4 className="text-xs text-white/25 uppercase tracking-wider mb-3">Leads</h4>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-lg font-bold text-blue-400">{leadCount}</span>
-                  <span className="text-sm text-gray-400">leads matching filters</span>
+                  <span className="text-sm text-white/40">leads matching filters</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {form.lead_filter.status.length > 0 && form.lead_filter.status.map((s) => (
@@ -715,53 +703,53 @@ export default function NewCampaignPage() {
                     <span key={s} className="px-2 py-0.5 rounded text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/20">{s}</span>
                   ))}
                   {form.lead_filter.status.length === 0 && form.lead_filter.source.length === 0 && form.lead_filter.tags.length === 0 && (
-                    <span className="text-xs text-gray-500">All leads (no filters)</span>
+                    <span className="text-xs text-white/25">All leads (no filters)</span>
                   )}
                 </div>
               </div>
 
               {/* Schedule */}
-              <div className="rounded-lg border border-white/5 bg-white/[0.02] p-4">
-                <h4 className="text-xs text-gray-500 uppercase tracking-wider mb-3">Schedule</h4>
+              <div className="stat-mini p-4">
+                <h4 className="text-xs text-white/25 uppercase tracking-wider mb-3">Schedule</h4>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-[10px] text-gray-600">Start Date</p>
-                    <p className="text-sm text-white">{form.schedule_start || '--'}</p>
+                    <p className="text-[10px] text-white/15">Start Date</p>
+                    <p className="text-sm text-white/90">{form.schedule_start || '--'}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-600">End Date</p>
-                    <p className="text-sm text-white">{form.schedule_end || 'Until complete'}</p>
+                    <p className="text-[10px] text-white/15">End Date</p>
+                    <p className="text-sm text-white/90">{form.schedule_end || 'Until complete'}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-600">Calling Hours</p>
-                    <p className="text-sm text-white">{form.calling_hours_start} - {form.calling_hours_end}</p>
+                    <p className="text-[10px] text-white/15">Calling Hours</p>
+                    <p className="text-sm text-white/90">{form.calling_hours_start} - {form.calling_hours_end}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-600">Days</p>
-                    <p className="text-sm text-white">{form.calling_days.join(', ')}</p>
+                    <p className="text-[10px] text-white/15">Days</p>
+                    <p className="text-sm text-white/90">{form.calling_days.join(', ')}</p>
                   </div>
                 </div>
               </div>
 
               {/* Pacing */}
-              <div className="rounded-lg border border-white/5 bg-white/[0.02] p-4">
-                <h4 className="text-xs text-gray-500 uppercase tracking-wider mb-3">Pacing</h4>
+              <div className="stat-mini p-4">
+                <h4 className="text-xs text-white/25 uppercase tracking-wider mb-3">Pacing</h4>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-[10px] text-gray-600">Max Concurrent</p>
-                    <p className="text-sm text-white font-mono">{form.max_concurrent}</p>
+                    <p className="text-[10px] text-white/15">Max Concurrent</p>
+                    <p className="text-sm text-white/90 font-mono">{form.max_concurrent}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-600">Calls/Hour</p>
-                    <p className="text-sm text-white font-mono">{form.calls_per_hour}</p>
+                    <p className="text-[10px] text-white/15">Calls/Hour</p>
+                    <p className="text-sm text-white/90 font-mono">{form.calls_per_hour}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-600">Max Retries</p>
-                    <p className="text-sm text-white font-mono">{form.max_retries}</p>
+                    <p className="text-[10px] text-white/15">Max Retries</p>
+                    <p className="text-sm text-white/90 font-mono">{form.max_retries}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-600">Retry Delay</p>
-                    <p className="text-sm text-white font-mono">{form.retry_delay_hours}h</p>
+                    <p className="text-[10px] text-white/15">Retry Delay</p>
+                    <p className="text-sm text-white/90 font-mono">{form.retry_delay_hours}h</p>
                   </div>
                 </div>
               </div>
@@ -775,7 +763,7 @@ export default function NewCampaignPage() {
         <button
           onClick={() => setStep(Math.max(1, step - 1))}
           disabled={step === 1}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-gray-300 text-sm hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white/60 text-sm hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
@@ -787,7 +775,7 @@ export default function NewCampaignPage() {
           <button
             onClick={() => setStep(Math.min(6, step + 1))}
             disabled={!canProceed()}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-500 hover:bg-blue-400 text-white text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-500 hover:bg-blue-400 text-white/90 text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
             Next
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -798,7 +786,7 @@ export default function NewCampaignPage() {
           <button
             onClick={handleLaunch}
             disabled={submitting}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold disabled:opacity-50 transition-colors"
+            className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white/90 text-sm font-bold disabled:opacity-50 transition-colors"
           >
             {submitting ? (
               <>

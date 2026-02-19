@@ -16,12 +16,6 @@ interface Script {
   updated_at: string;
 }
 
-const SAMPLE_SCRIPTS: Script[] = [
-  { id: 'insurance-v1', name: 'Insurance Qualification & Booking v1', description: 'AI-SDR script for qualifying insurance leads and booking appointments with Billy McWilliams', industry: 'insurance', version: 1, active: true, states: { GREETING: {}, CONSENT_CHECK: {}, DISCOVERY: {}, QUALIFICATION: {}, BOOKING: {}, OBJECTION_HANDLER: {}, WARM_GOODBYE: {} }, created_at: '2026-02-17T00:00:00Z', updated_at: '2026-02-17T00:00:00Z' },
-  { id: 'auto-insurance-v1', name: 'Auto Insurance Specialist', description: 'Focused script for auto insurance leads — emphasizes rate comparison and multi-policy discounts', industry: 'auto_insurance', version: 1, active: false, states: { GREETING: {}, CONSENT_CHECK: {}, AUTO_DISCOVERY: {}, RATE_COMPARISON: {}, BOOKING: {}, WARM_GOODBYE: {} }, created_at: '2026-02-17T00:00:00Z', updated_at: '2026-02-17T00:00:00Z' },
-  { id: 'home-insurance-v1', name: 'Home Insurance Qualifier', description: 'Script targeting homeowners — property-focused discovery, coverage gap analysis', industry: 'home_insurance', version: 1, active: false, states: { GREETING: {}, CONSENT_CHECK: {}, PROPERTY_DISCOVERY: {}, COVERAGE_ANALYSIS: {}, BOOKING: {}, WARM_GOODBYE: {} }, created_at: '2026-02-17T00:00:00Z', updated_at: '2026-02-17T00:00:00Z' },
-];
-
 const STATE_COLORS: Record<string, string> = {
   GREETING: '#3B82F6', CONSENT_CHECK: '#8B5CF6', DISCOVERY: '#06B6D4', AUTO_DISCOVERY: '#06B6D4',
   PROPERTY_DISCOVERY: '#06B6D4', QUALIFICATION: '#F59E0B', RATE_COMPARISON: '#F59E0B',
@@ -30,7 +24,7 @@ const STATE_COLORS: Record<string, string> = {
 };
 
 export default function ScriptsPage() {
-  const [scripts, setScripts] = useState<Script[]>(SAMPLE_SCRIPTS);
+  const [scripts, setScripts] = useState<Script[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
@@ -71,13 +65,13 @@ export default function ScriptsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fadeInUp">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white">Scripts</h2>
-          <p className="text-sm text-gray-500">AI call scripts with state machine flow</p>
+          <h2 className="text-xl font-bold text-white/90 tracking-tight">Scripts</h2>
+          <p className="text-sm text-white/25">AI call scripts with state machine flow</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium transition-colors">
+        <button onClick={() => setShowCreate(true)} className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white/90 text-sm font-medium transition-colors">
           + New Script
         </button>
       </div>
@@ -86,10 +80,10 @@ export default function ScriptsPage() {
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111128] p-6 space-y-4">
-            <h3 className="text-lg font-bold text-white">Create Script</h3>
-            <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Script name" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50" />
-            <textarea value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="Description" rows={3} className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 resize-none" />
-            <select value={newIndustry} onChange={e => setNewIndustry(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500/50">
+            <h3 className="text-lg font-bold text-white/90 tracking-tight">Create Script</h3>
+            <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Script name" className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white/90 placeholder-white/25 focus:outline-none focus:border-blue-500/50" />
+            <textarea value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="Description" rows={3} className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white/90 placeholder-white/25 focus:outline-none focus:border-blue-500/50 resize-none" />
+            <select value={newIndustry} onChange={e => setNewIndustry(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white/90 focus:outline-none focus:border-blue-500/50">
               <option value="insurance">Insurance (General)</option>
               <option value="auto_insurance">Auto Insurance</option>
               <option value="home_insurance">Home Insurance</option>
@@ -97,8 +91,8 @@ export default function ScriptsPage() {
               <option value="commercial">Commercial Insurance</option>
             </select>
             <div className="flex gap-3 pt-2">
-              <button onClick={() => setShowCreate(false)} className="flex-1 px-4 py-2 rounded-lg border border-white/10 text-gray-400 hover:text-white text-sm transition-colors">Cancel</button>
-              <button onClick={createScript} className="flex-1 px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium transition-colors">Create</button>
+              <button onClick={() => setShowCreate(false)} className="flex-1 px-4 py-2 rounded-lg border border-white/10 text-white/40 hover:text-white/90 text-sm transition-colors">Cancel</button>
+              <button onClick={createScript} className="flex-1 px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white/90 text-sm font-medium transition-colors">Create</button>
             </div>
           </div>
         </div>
@@ -107,16 +101,16 @@ export default function ScriptsPage() {
       {/* Script Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {scripts.map(script => (
-          <div key={script.id} className="rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-sm p-5 hover:border-white/10 transition-colors">
+          <div key={script.id} className="glass-panel p-5 hover:border-white/10 transition-colors">
             <div className="flex items-start justify-between mb-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-medium text-white">{script.name}</h3>
+                  <h3 className="text-sm font-medium text-white/90">{script.name}</h3>
                   {script.active && <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">ACTIVE</span>}
                 </div>
-                <p className="text-xs text-gray-500 mt-1">{script.description}</p>
+                <p className="text-xs text-white/25 mt-1">{script.description}</p>
               </div>
-              <span className="text-xs text-gray-600">v{script.version}</span>
+              <span className="text-xs text-white/15">v{script.version}</span>
             </div>
 
             {/* State Flow Visualization */}
@@ -126,18 +120,18 @@ export default function ScriptsPage() {
                   <div className="px-2 py-1 rounded text-[10px] font-mono border" style={{ borderColor: `${STATE_COLORS[state] || '#6B7280'}40`, color: STATE_COLORS[state] || '#6B7280', backgroundColor: `${STATE_COLORS[state] || '#6B7280'}10` }}>
                     {state.replace(/_/g, ' ')}
                   </div>
-                  {i < arr.length - 1 && <span className="text-gray-600 text-xs">\u2192</span>}
+                  {i < arr.length - 1 && <span className="text-white/15 text-xs">{'\u2192'}</span>}
                 </div>
               ))}
             </div>
 
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 text-xs text-gray-500">
+              <div className="flex items-center gap-3 text-xs text-white/25">
                 <span>{Object.keys(script.states).length} states</span>
                 <span>{script.industry}</span>
               </div>
               <div className="flex items-center gap-2">
-                <button onClick={() => duplicateScript(script)} className="px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:text-white border border-white/5 hover:border-white/10 transition-colors">Duplicate</button>
+                <button onClick={() => duplicateScript(script)} className="px-3 py-1.5 rounded-lg text-xs text-white/40 hover:text-white/90 border border-white/[0.04] hover:border-white/10 transition-colors">Duplicate</button>
                 <Link href={`/scripts/${script.id}`} className="px-3 py-1.5 rounded-lg text-xs text-blue-400 hover:text-blue-300 border border-blue-500/20 hover:border-blue-500/30 transition-colors">Edit</Link>
               </div>
             </div>

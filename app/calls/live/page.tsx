@@ -59,40 +59,6 @@ const SENTIMENT_CONFIG: Record<SentimentLevel, { label: string; color: string; b
   very_negative: { label: 'Very Negative', color: 'text-red-400', bg: 'bg-red-500' },
 };
 
-// ── Sample Active Call ──────────────────────────────────────────────────────
-
-const SAMPLE_ACTIVE: ActiveCall = {
-  callId: 'call_live_001',
-  leadInfo: {
-    name: 'Kevin O\'Brien',
-    phone: '+1 (432) 555-3456',
-    email: 'kevin.obrien@gmail.com',
-    company: 'Permian Basin Investments LLC',
-    source: 'Website Form',
-    status: 'warm',
-    notes: 'Previously inquired about commercial lots near I-20 corridor. Budget $500K-1M range.',
-    last_contact: '2026-02-10T16:30:00Z',
-    tags: ['commercial', 'investor', 'permian-basin'],
-  },
-  scriptState: 'DISCOVERY',
-  sentiment: 'positive',
-  startedAt: new Date(Date.now() - 95000).toISOString(),
-  direction: 'inbound',
-  campaignName: null,
-  scriptName: 'Inbound Qualification',
-};
-
-const SAMPLE_TRANSCRIPT: LiveTranscriptLine[] = [
-  { speaker: 'agent', text: 'Hey there, thanks for calling Echo Real Estate. This is Billy, how can I help you today?', timestamp: 0, isFinal: true },
-  { speaker: 'lead', text: 'Hey Billy, yeah, my name\'s Kevin O\'Brien. I filled out a form on your website a few days back about some commercial property.', timestamp: 8, isFinal: true },
-  { speaker: 'agent', text: 'Kevin! Great to hear from you. Yeah, I see your inquiry right here. You were looking at some lots near the I-20 corridor, is that right?', timestamp: 18, isFinal: true },
-  { speaker: 'lead', text: 'That\'s right. My company, Permian Basin Investments, we\'re looking to develop a small retail center. Something in the 2 to 3 acre range.', timestamp: 30, isFinal: true },
-  { speaker: 'agent', text: 'Perfect. A retail center near I-20 makes a lot of sense with all the growth out there. What kind of timeline are you working with for this project?', timestamp: 45, isFinal: true },
-  { speaker: 'lead', text: 'We want to break ground by Q3 this year if possible. So we need to lock down the land in the next 60 days ideally.', timestamp: 58, isFinal: true },
-  { speaker: 'agent', text: 'Okay, 60 days, that\'s very doable. I actually have three parcels right now that fit your criteria. Let me pull those up...', timestamp: 72, isFinal: true },
-  { speaker: 'lead', text: 'Yeah let me hear what you got.', timestamp: 82, isFinal: false },
-];
-
 // ── Main Component ──────────────────────────────────────────────────────────
 
 function LiveCallContent() {
@@ -114,10 +80,9 @@ function LiveCallContent() {
   const transcriptEndRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // ── Initialize with sample data or connect to WS ──────────────────────────
+  // ── Connect to WebSocket ──────────────────────────────────────────────────
 
   useEffect(() => {
-    // Try to connect to live WebSocket
     const callId = callIdParam || 'live';
     const wsUrl = `${VOICE_WS_BASE}/voice/live/${callId}`;
 
@@ -136,7 +101,6 @@ function LiveCallContent() {
             setActiveCall(msg.data);
           } else if (msg.type === 'transcript') {
             setTranscript((prev) => {
-              // Replace last line if interim, append if final
               if (!msg.data.isFinal && prev.length > 0 && !prev[prev.length - 1].isFinal) {
                 return [...prev.slice(0, -1), msg.data];
               }
@@ -151,9 +115,6 @@ function LiveCallContent() {
       };
 
       ws.onerror = () => {
-        // WS not live, load sample data
-        setActiveCall(SAMPLE_ACTIVE);
-        setTranscript(SAMPLE_TRANSCRIPT);
         setConnected(false);
       };
 
@@ -161,9 +122,7 @@ function LiveCallContent() {
         setConnected(false);
       };
     } catch {
-      // WS not available, use sample
-      setActiveCall(SAMPLE_ACTIVE);
-      setTranscript(SAMPLE_TRANSCRIPT);
+      setConnected(false);
     }
 
     return () => {
@@ -254,15 +213,15 @@ function LiveCallContent() {
 
   if (!activeCall) {
     return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
-        <div className="rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-sm p-12 text-center max-w-md">
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] animate-fadeInUp">
+        <div className="glass-panel p-12 text-center max-w-md">
           <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-white/5 flex items-center justify-center">
-            <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
+            <svg className="w-8 h-8 text-white/15" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
             </svg>
           </div>
-          <h3 className="text-lg font-bold text-white mb-2">No Active Calls</h3>
-          <p className="text-sm text-gray-500 mb-6">There are no live calls in progress right now. Start a campaign or wait for an inbound call.</p>
+          <h3 className="text-lg font-bold text-white/90 tracking-tight mb-2">No Active Calls</h3>
+          <p className="text-sm text-white/25 mb-6">There are no live calls in progress right now. Start a campaign or wait for an inbound call.</p>
           <div className="flex justify-center gap-3">
             <a
               href="/campaigns"
@@ -272,7 +231,7 @@ function LiveCallContent() {
             </a>
             <a
               href="/calls"
-              className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-gray-300 text-sm hover:bg-white/10 transition-colors"
+              className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white/60 text-sm hover:bg-white/10 transition-colors"
             >
               Call History
             </a>
@@ -286,25 +245,25 @@ function LiveCallContent() {
   const sentimentCfg = SENTIMENT_CONFIG[activeCall.sentiment];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 animate-fadeInUp">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="relative">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold text-lg">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white/90 font-bold text-lg">
               {activeCall.leadInfo.name[0]}
             </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#0a0a1a] animate-pulse" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#060612] animate-pulse" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">{activeCall.leadInfo.name}</h2>
-            <div className="flex items-center gap-3 text-sm text-gray-500">
+            <h2 className="text-xl font-bold text-white/90 tracking-tight">{activeCall.leadInfo.name}</h2>
+            <div className="flex items-center gap-3 text-sm text-white/25">
               <span>{activeCall.leadInfo.phone}</span>
-              <span className="w-1 h-1 rounded-full bg-gray-600" />
+              <span className="w-1 h-1 rounded-full bg-white/15" />
               <span className="capitalize">{activeCall.direction}</span>
               {activeCall.campaignName && (
                 <>
-                  <span className="w-1 h-1 rounded-full bg-gray-600" />
+                  <span className="w-1 h-1 rounded-full bg-white/15" />
                   <span>{activeCall.campaignName}</span>
                 </>
               )}
@@ -319,14 +278,13 @@ function LiveCallContent() {
             <span className="text-red-400 text-xs uppercase tracking-wider font-medium">LIVE</span>
           </div>
           <div className="px-4 py-2 rounded-lg bg-white/5 border border-white/10">
-            <span className="text-2xl font-mono text-white font-bold">{fmtTimer(elapsedSeconds)}</span>
+            <span className="text-2xl font-mono text-white/90 font-bold">{fmtTimer(elapsedSeconds)}</span>
           </div>
         </div>
       </div>
 
       {/* Status Bar: Script State + Sentiment */}
       <div className="flex items-center gap-4">
-        {/* Script State */}
         <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${scriptCfg.bg} ${scriptCfg.border}`}>
           <svg className={`w-4 h-4 ${scriptCfg.color}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d={scriptCfg.icon} />
@@ -334,61 +292,63 @@ function LiveCallContent() {
           <span className={`text-xs font-medium ${scriptCfg.color}`}>Stage: {scriptCfg.label}</span>
         </div>
 
-        {/* Sentiment */}
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
           <span className={`w-2.5 h-2.5 rounded-full ${sentimentCfg.bg}`} />
           <span className={`text-xs ${sentimentCfg.color}`}>{sentimentCfg.label}</span>
         </div>
 
-        {/* Script Name */}
         <div className="px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
           <span className="text-xs text-purple-300">{activeCall.scriptName}</span>
         </div>
 
         <div className="flex-1" />
 
-        {/* Connection Status */}
         <div className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs ${
           connected ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
         }`}>
           <span className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`} />
-          {connected ? 'Connected' : 'Simulated'}
+          {connected ? 'Connected' : 'Connecting...'}
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
         {/* Transcript Feed */}
-        <div className="lg:col-span-3 rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-sm overflow-hidden flex flex-col" style={{ height: '500px' }}>
-          <div className="px-5 py-3 border-b border-white/5 flex items-center justify-between">
-            <h3 className="text-sm font-medium text-white">Live Transcript</h3>
-            <span className="text-[10px] text-gray-500">{transcript.length} lines</span>
+        <div className="lg:col-span-3 glass-panel overflow-hidden flex flex-col" style={{ height: '500px' }}>
+          <div className="px-5 py-3 border-b border-white/[0.04] flex items-center justify-between">
+            <h3 className="text-sm font-medium text-white/90">Live Transcript</h3>
+            <span className="text-[10px] text-white/25">{transcript.length} lines</span>
           </div>
 
           <div className="flex-1 overflow-y-auto p-5 space-y-3">
+            {transcript.length === 0 && (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-sm text-white/25">Waiting for conversation...</p>
+              </div>
+            )}
             {transcript.map((line, i) => {
               const isAgent = line.speaker === 'agent';
               return (
                 <div key={i} className={`flex gap-3 ${!line.isFinal ? 'opacity-60' : ''}`}>
                   <div className="shrink-0 mt-0.5">
                     <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                      isAgent ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-500/20 text-gray-400'
+                      isAgent ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-500/20 text-white/40'
                     }`}>
                       {isAgent ? 'AI' : 'L'}
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <span className={`text-[11px] font-medium ${isAgent ? 'text-blue-400' : 'text-gray-400'}`}>
+                      <span className={`text-[11px] font-medium ${isAgent ? 'text-blue-400' : 'text-white/40'}`}>
                         {isAgent ? 'BillyMC' : activeCall.leadInfo.name.split(' ')[0]}
                       </span>
-                      <span className="text-[10px] text-gray-600 font-mono">
+                      <span className="text-[10px] text-white/15 font-mono">
                         {Math.floor(line.timestamp / 60)}:{(line.timestamp % 60).toString().padStart(2, '0')}
                       </span>
                       {!line.isFinal && (
                         <span className="text-[9px] text-amber-400 italic">typing...</span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-300 leading-relaxed">{line.text}</p>
+                    <p className="text-sm text-white/60 leading-relaxed">{line.text}</p>
                   </div>
                 </div>
               );
@@ -397,7 +357,7 @@ function LiveCallContent() {
           </div>
 
           {/* Whisper Input */}
-          <div className="px-5 py-3 border-t border-white/5 bg-black/20">
+          <div className="px-5 py-3 border-t border-white/[0.04] bg-black/20">
             <div className="flex items-center gap-3">
               <div className="relative flex-1">
                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -409,7 +369,7 @@ function LiveCallContent() {
                   value={whisperText}
                   onChange={(e) => setWhisperText(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') sendWhisper(); }}
-                  className="w-full pl-10 pr-4 py-2 rounded-lg bg-amber-500/5 border border-amber-500/20 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/40 transition-colors"
+                  className="w-full pl-10 pr-4 py-2 rounded-lg bg-amber-500/5 border border-amber-500/20 text-sm text-white/90 placeholder-white/25 focus:outline-none focus:border-amber-500/40 transition-colors"
                 />
               </div>
               <button
@@ -420,15 +380,15 @@ function LiveCallContent() {
                 {whisperSending ? 'Sending...' : 'Whisper'}
               </button>
             </div>
-            <p className="text-[10px] text-gray-600 mt-1.5">Whisper instructions are only heard by the AI, not the caller</p>
+            <p className="text-[10px] text-white/15 mt-1.5">Whisper instructions are only heard by the AI, not the caller</p>
           </div>
         </div>
 
         {/* Right Sidebar: Lead Info + Actions */}
         <div className="space-y-5">
           {/* Quick Actions */}
-          <div className="rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-sm p-4 space-y-2">
-            <h4 className="text-xs text-gray-500 uppercase tracking-wider mb-3">Actions</h4>
+          <div className="glass-panel p-4 space-y-2">
+            <h4 className="text-xs text-white/25 uppercase tracking-wider mb-3">Actions</h4>
             <button
               onClick={takeOverCall}
               className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-blue-500/15 border border-blue-500/30 text-blue-400 text-xs hover:bg-blue-500/25 transition-colors"
@@ -467,45 +427,45 @@ function LiveCallContent() {
           </div>
 
           {/* Lead Info */}
-          <div className="rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-sm p-4">
-            <h4 className="text-xs text-gray-500 uppercase tracking-wider mb-3">Lead Info</h4>
+          <div className="glass-panel p-4">
+            <h4 className="text-xs text-white/25 uppercase tracking-wider mb-3">Lead Info</h4>
             <div className="space-y-2.5">
               <div>
-                <p className="text-[10px] text-gray-600">Name</p>
-                <p className="text-sm text-white">{activeCall.leadInfo.name}</p>
+                <p className="text-[10px] text-white/15">Name</p>
+                <p className="text-sm text-white/90">{activeCall.leadInfo.name}</p>
               </div>
               <div>
-                <p className="text-[10px] text-gray-600">Phone</p>
-                <p className="text-sm text-gray-300 font-mono">{activeCall.leadInfo.phone}</p>
+                <p className="text-[10px] text-white/15">Phone</p>
+                <p className="text-sm text-white/60 font-mono">{activeCall.leadInfo.phone}</p>
               </div>
               {activeCall.leadInfo.email && (
                 <div>
-                  <p className="text-[10px] text-gray-600">Email</p>
-                  <p className="text-sm text-gray-300">{activeCall.leadInfo.email}</p>
+                  <p className="text-[10px] text-white/15">Email</p>
+                  <p className="text-sm text-white/60">{activeCall.leadInfo.email}</p>
                 </div>
               )}
               {activeCall.leadInfo.company && (
                 <div>
-                  <p className="text-[10px] text-gray-600">Company</p>
-                  <p className="text-sm text-gray-300">{activeCall.leadInfo.company}</p>
+                  <p className="text-[10px] text-white/15">Company</p>
+                  <p className="text-sm text-white/60">{activeCall.leadInfo.company}</p>
                 </div>
               )}
               <div>
-                <p className="text-[10px] text-gray-600">Source</p>
-                <p className="text-sm text-gray-300">{activeCall.leadInfo.source}</p>
+                <p className="text-[10px] text-white/15">Source</p>
+                <p className="text-sm text-white/60">{activeCall.leadInfo.source}</p>
               </div>
               <div>
-                <p className="text-[10px] text-gray-600">Status</p>
+                <p className="text-[10px] text-white/15">Status</p>
                 <span className="inline-block px-2 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-400 border border-amber-500/20 capitalize">
                   {activeCall.leadInfo.status}
                 </span>
               </div>
               {activeCall.leadInfo.tags.length > 0 && (
                 <div>
-                  <p className="text-[10px] text-gray-600 mb-1">Tags</p>
+                  <p className="text-[10px] text-white/15 mb-1">Tags</p>
                   <div className="flex flex-wrap gap-1">
                     {activeCall.leadInfo.tags.map((tag) => (
-                      <span key={tag} className="px-1.5 py-0.5 rounded text-[9px] bg-white/5 text-gray-400 border border-white/5">
+                      <span key={tag} className="px-1.5 py-0.5 rounded text-[9px] bg-white/5 text-white/40 border border-white/[0.04]">
                         {tag}
                       </span>
                     ))}
@@ -514,14 +474,14 @@ function LiveCallContent() {
               )}
               {activeCall.leadInfo.notes && (
                 <div>
-                  <p className="text-[10px] text-gray-600">Notes</p>
-                  <p className="text-xs text-gray-400 leading-relaxed">{activeCall.leadInfo.notes}</p>
+                  <p className="text-[10px] text-white/15">Notes</p>
+                  <p className="text-xs text-white/40 leading-relaxed">{activeCall.leadInfo.notes}</p>
                 </div>
               )}
               {activeCall.leadInfo.last_contact && (
                 <div>
-                  <p className="text-[10px] text-gray-600">Last Contact</p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-[10px] text-white/15">Last Contact</p>
+                  <p className="text-xs text-white/40">
                     {new Date(activeCall.leadInfo.last_contact).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </p>
                 </div>
@@ -530,8 +490,8 @@ function LiveCallContent() {
           </div>
 
           {/* Script State Progress */}
-          <div className="rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-sm p-4">
-            <h4 className="text-xs text-gray-500 uppercase tracking-wider mb-3">Script Flow</h4>
+          <div className="glass-panel p-4">
+            <h4 className="text-xs text-white/25 uppercase tracking-wider mb-3">Script Flow</h4>
             <div className="space-y-1">
               {(Object.entries(SCRIPT_STATES) as [ScriptState, typeof SCRIPT_STATES[ScriptState]][]).map(([key, cfg]) => {
                 const isActive = key === activeCall.scriptState;
@@ -546,10 +506,10 @@ function LiveCallContent() {
                       isActive ? `${cfg.bg} border ${cfg.border}` : isPast ? 'opacity-40' : 'opacity-25'
                     }`}
                   >
-                    <svg className={`w-3.5 h-3.5 ${isActive ? cfg.color : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <svg className={`w-3.5 h-3.5 ${isActive ? cfg.color : 'text-white/25'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d={cfg.icon} />
                     </svg>
-                    <span className={`text-[11px] ${isActive ? cfg.color : 'text-gray-500'}`}>{cfg.label}</span>
+                    <span className={`text-[11px] ${isActive ? cfg.color : 'text-white/25'}`}>{cfg.label}</span>
                     {isPast && (
                       <svg className="w-3 h-3 ml-auto text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />

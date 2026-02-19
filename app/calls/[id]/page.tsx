@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 import { apiFetch, API_BASE } from '../../lib/api';
 
-// ── Types ───────────────────────────────────────────────────────────────────
+// -- Types -------------------------------------------------------------------
 
 interface TranscriptLine {
   speaker: 'agent' | 'lead';
@@ -58,64 +58,7 @@ interface CallDetail {
   recording_url: string | null;
 }
 
-// ── Sample Data ─────────────────────────────────────────────────────────────
-
-const SAMPLE_CALL: CallDetail = {
-  id: 'call_001',
-  lead_name: 'James Thornton',
-  lead_phone: '+1 (432) 555-9012',
-  lead_email: 'j.thornton@email.com',
-  direction: 'outbound',
-  status: 'completed',
-  disposition: 'Appointment Set',
-  duration_seconds: 247,
-  started_at: '2026-02-17T14:32:00Z',
-  ended_at: '2026-02-17T14:36:07Z',
-  cost: 0.42,
-  cost_breakdown: { twilio: 0.07, deepgram: 0.04, elevenlabs: 0.31, llm: 0.00, total: 0.42 },
-  transcript_summary: 'BillyMC successfully engaged James Thornton about residential properties in the Midland area. James expressed strong interest in 3-bedroom listings under $350K. An in-person viewing was booked for Friday at 2pm at the Mockingbird Lane property. James confirmed he is pre-approved with First Basin Credit Union.',
-  transcript: [
-    { speaker: 'agent', text: 'Hey James, this is Billy calling from Echo Real Estate. How you doing today?', timestamp: 0, sentiment: 'positive' },
-    { speaker: 'lead', text: 'Hey Billy, doing alright. What can I do for you?', timestamp: 5, sentiment: 'neutral' },
-    { speaker: 'agent', text: 'Great to hear! I noticed you filled out a form on our website about properties in the Midland area. I wanted to see if you\'re still looking for a place.', timestamp: 10, sentiment: 'positive' },
-    { speaker: 'lead', text: 'Yeah, actually I am. We\'ve been thinking about upgrading. Got two kids now and need more space.', timestamp: 22, sentiment: 'positive' },
-    { speaker: 'agent', text: 'Oh congratulations! Family\'s growing, that\'s exciting. So you\'re looking for something bigger then. What are you thinking, three bedrooms, four?', timestamp: 30, sentiment: 'positive' },
-    { speaker: 'lead', text: 'Three bedrooms would work. Maybe a good-sized yard. We\'re not trying to go crazy on price though.', timestamp: 42, sentiment: 'neutral' },
-    { speaker: 'agent', text: 'Makes total sense. What kind of budget range are you working with?', timestamp: 50, sentiment: 'neutral' },
-    { speaker: 'lead', text: 'We\'re trying to stay under 350. We got pre-approved through First Basin for up to 375 but I don\'t want to stretch that far.', timestamp: 55, sentiment: 'positive' },
-    { speaker: 'agent', text: 'Smart move, staying within your comfort zone. I actually have a couple listings right now that would be perfect. There\'s one on Mockingbird Lane, three bed, two bath, big backyard, listed at 329. Would you be interested in taking a look?', timestamp: 68, sentiment: 'positive' },
-    { speaker: 'lead', text: 'Mockingbird Lane? Where\'s that at exactly?', timestamp: 85, sentiment: 'neutral' },
-    { speaker: 'agent', text: 'It\'s over in the Grassland Estates neighborhood, just off Wadley. Great school district, real quiet street.', timestamp: 90, sentiment: 'positive' },
-    { speaker: 'lead', text: 'Oh nice, my wife\'s sister lives over that way. Yeah we\'d definitely be interested in seeing it.', timestamp: 100, sentiment: 'positive' },
-    { speaker: 'agent', text: 'Awesome! How does Friday work for you? I could meet you out there around 2 o\'clock.', timestamp: 108, sentiment: 'positive' },
-    { speaker: 'lead', text: 'Friday at 2 works. Let me just double-check with the wife but I\'m pretty sure we\'re good.', timestamp: 115, sentiment: 'positive' },
-    { speaker: 'agent', text: 'Perfect. I\'ll send you the listing details and the address to your email. And I\'ll follow up Thursday evening to confirm. Sound good?', timestamp: 122, sentiment: 'positive' },
-    { speaker: 'lead', text: 'Sounds great Billy. Appreciate the call.', timestamp: 132, sentiment: 'positive' },
-    { speaker: 'agent', text: 'My pleasure James. Talk to you Thursday. Have a great rest of your day!', timestamp: 137, sentiment: 'positive' },
-    { speaker: 'lead', text: 'You too, bye.', timestamp: 143, sentiment: 'positive' },
-  ],
-  highlights: [
-    { type: 'data_extracted', label: 'Budget Identified', detail: 'Pre-approved up to $375K through First Basin Credit Union. Target budget under $350K.', timestamp: 55 },
-    { type: 'data_extracted', label: 'Requirements', detail: '3 bedrooms, good-sized yard, family-friendly neighborhood, good schools.', timestamp: 42 },
-    { type: 'commitment', label: 'Property Interest', detail: 'Lead expressed strong interest in Mockingbird Lane listing ($329K).', timestamp: 100 },
-    { type: 'appointment', label: 'Viewing Booked', detail: 'Friday at 2:00 PM at Mockingbird Lane property. Follow-up call Thursday evening.', timestamp: 115 },
-    { type: 'key_moment', label: 'Personal Connection', detail: 'Lead\'s wife\'s sister lives in the same neighborhood - strong geographic affinity.', timestamp: 100 },
-  ],
-  sentiment_overall: 'positive',
-  sentiment_timeline: [0.6, 0.5, 0.7, 0.7, 0.8, 0.6, 0.5, 0.7, 0.8, 0.6, 0.8, 0.9, 0.9, 0.85, 0.9, 0.9, 0.85, 0.9],
-  coaching_notes: [
-    { category: 'positive', text: 'Excellent rapport building - natural, conversational tone. The congratulations on family growth was genuine and well-timed.' },
-    { category: 'positive', text: 'Good discovery questions - uncovered budget, requirements, and pre-approval status organically.' },
-    { category: 'positive', text: 'Strong close - offered specific property, specific time, and specific follow-up plan.' },
-    { category: 'improvement', text: 'Could ask about timeline urgency - when does the lease end? Any deadline pressure?' },
-    { category: 'technique', text: 'Consider offering 2-3 viewing options to increase show rate: "Would Friday at 2 or Saturday morning work better?"' },
-  ],
-  campaign_name: 'Midland Hot Leads Q1',
-  script_name: 'Real Estate Warm Outreach',
-  recording_url: null,
-};
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// -- Helpers -----------------------------------------------------------------
 
 function fmtDuration(secs: number): string {
   const m = Math.floor(secs / 60);
@@ -136,7 +79,11 @@ function fmtDateTime(iso: string): string {
   });
 }
 
-// ── Waveform Visualizer ─────────────────────────────────────────────────────
+function SkeletonBlock({ className }: { className?: string }) {
+  return <div className={`animate-pulse rounded-lg bg-white/[0.04] ${className || ''}`} />;
+}
+
+// -- Waveform Visualizer -----------------------------------------------------
 
 function WaveformBars({ progress, barCount = 80 }: { progress: number; barCount?: number }) {
   const bars = useRef<number[]>([]);
@@ -163,9 +110,10 @@ function WaveformBars({ progress, barCount = 80 }: { progress: number; barCount?
   );
 }
 
-// ── Sentiment Bar ───────────────────────────────────────────────────────────
+// -- Sentiment Bar -----------------------------------------------------------
 
 function SentimentTimeline({ data }: { data: number[] }) {
+  if (data.length === 0) return null;
   return (
     <div className="flex items-end gap-[2px] h-8 w-full">
       {data.map((v, i) => {
@@ -184,7 +132,7 @@ function SentimentTimeline({ data }: { data: number[] }) {
   );
 }
 
-// ── Highlight Type Config ───────────────────────────────────────────────────
+// -- Highlight Type Config ---------------------------------------------------
 
 const HIGHLIGHT_CONFIG: Record<Highlight['type'], { icon: string; color: string; border: string; bg: string }> = {
   objection:      { icon: 'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z', color: 'text-red-400', border: 'border-red-500/20', bg: 'bg-red-500/5' },
@@ -194,14 +142,14 @@ const HIGHLIGHT_CONFIG: Record<Highlight['type'], { icon: string; color: string;
   key_moment:     { icon: 'M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z', color: 'text-amber-400', border: 'border-amber-500/20', bg: 'bg-amber-500/5' },
 };
 
-// ── Main Component ──────────────────────────────────────────────────────────
+// -- Main Component ----------------------------------------------------------
 
 export default function CallReviewPage() {
   const params = useParams();
   const router = useRouter();
   const callId = params.id as string;
 
-  const [call, setCall] = useState<CallDetail>(SAMPLE_CALL);
+  const [call, setCall] = useState<CallDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'transcript' | 'highlights' | 'coaching'>('transcript');
 
@@ -225,7 +173,7 @@ export default function CallReviewPage() {
           if (json.data) setCall(json.data);
         }
       } catch {
-        // API not live, use sample data
+        // API not live yet
       }
       setLoading(false);
     }
@@ -235,7 +183,7 @@ export default function CallReviewPage() {
   // Audio time update
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || !call) return;
     const onTime = () => setCurrentTime(audio.currentTime);
     const onDur = () => setDuration(audio.duration || call.duration_seconds);
     const onEnd = () => setPlaying(false);
@@ -247,7 +195,7 @@ export default function CallReviewPage() {
       audio.removeEventListener('loadedmetadata', onDur);
       audio.removeEventListener('ended', onEnd);
     };
-  }, [call.duration_seconds]);
+  }, [call]);
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
@@ -271,11 +219,50 @@ export default function CallReviewPage() {
   }, []);
 
   const seekProgress = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!call) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const pct = (e.clientX - rect.left) / rect.width;
     const effectiveDuration = duration || call.duration_seconds;
     seekTo(pct * effectiveDuration);
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-5 animate-fadeInUp">
+        <div className="flex items-center gap-4">
+          <SkeletonBlock className="w-10 h-10 rounded-full" />
+          <div className="space-y-2">
+            <SkeletonBlock className="h-6 w-48" />
+            <SkeletonBlock className="h-4 w-64" />
+          </div>
+        </div>
+        <SkeletonBlock className="h-32 w-full" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <SkeletonBlock className="lg:col-span-2 h-[500px]" />
+          <div className="space-y-5">
+            <SkeletonBlock className="h-40" />
+            <SkeletonBlock className="h-32" />
+            <SkeletonBlock className="h-48" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!call) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 animate-fadeInUp">
+        <div className="w-16 h-16 rounded-full bg-white/[0.04] flex items-center justify-center mb-4">
+          <svg className="w-7 h-7 text-white/25" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+          </svg>
+        </div>
+        <p className="text-lg font-semibold text-white/40 tracking-tight mb-1">Call not found</p>
+        <p className="text-sm text-white/25 mb-4">This call record may not exist or has not been synced yet.</p>
+        <button onClick={() => router.back()} className="text-blue-400 hover:text-blue-300 text-sm">Go back</button>
+      </div>
+    );
+  }
 
   const effectiveDuration = duration || call.duration_seconds;
   const progress = effectiveDuration > 0 ? currentTime / effectiveDuration : 0;
@@ -283,47 +270,31 @@ export default function CallReviewPage() {
   // Find active transcript line
   const activeLineIdx = call.transcript.findLastIndex((l) => l.timestamp <= currentTime);
 
-  // Auto-scroll transcript
-  useEffect(() => {
-    if (autoScroll && transcriptRef.current && activeLineIdx >= 0) {
-      const el = transcriptRef.current.children[activeLineIdx] as HTMLElement;
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, [activeLineIdx, autoScroll]);
-
   const sentimentLabel = (s: string) => {
     if (s === 'positive') return { text: 'Positive', color: 'text-emerald-400', bg: 'bg-emerald-500/15', border: 'border-emerald-500/30' };
     if (s === 'negative') return { text: 'Negative', color: 'text-red-400', bg: 'bg-red-500/15', border: 'border-red-500/30' };
     return { text: 'Neutral', color: 'text-amber-400', bg: 'bg-amber-500/15', border: 'border-amber-500/30' };
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="w-10 h-10 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-      </div>
-    );
-  }
-
   const sent = sentimentLabel(call.sentiment_overall);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 animate-fadeInUp">
       {/* Back + Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <button onClick={() => router.back()} className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors">
+          <button onClick={() => router.back()} className="p-2 rounded-lg hover:bg-white/5 text-white/40 hover:text-white/90 transition-colors">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
             </svg>
           </button>
           <div>
-            <h2 className="text-xl font-bold text-white">{call.lead_name}</h2>
-            <div className="flex items-center gap-3 text-sm text-gray-500">
+            <h2 className="text-xl font-bold text-white/90 tracking-tight">{call.lead_name}</h2>
+            <div className="flex items-center gap-3 text-sm text-white/25">
               <span>{call.lead_phone}</span>
-              <span className="w-1 h-1 rounded-full bg-gray-600" />
+              <span className="w-1 h-1 rounded-full bg-white/15" />
               <span>{fmtDateTime(call.started_at)}</span>
-              <span className="w-1 h-1 rounded-full bg-gray-600" />
+              <span className="w-1 h-1 rounded-full bg-white/15" />
               <span className="font-mono">{fmtDuration(call.duration_seconds)}</span>
             </div>
           </div>
@@ -368,12 +339,12 @@ export default function CallReviewPage() {
           <span className="px-2.5 py-1 rounded-lg text-[11px] bg-purple-500/10 text-purple-300 border border-purple-500/20">{call.script_name}</span>
         )}
         <span className={`px-2.5 py-1 rounded-lg text-[11px] border ${sent.bg} ${sent.color} ${sent.border}`}>{sent.text} Sentiment</span>
-        <span className="px-2.5 py-1 rounded-lg text-[11px] bg-white/5 text-gray-300 border border-white/10 capitalize">{call.direction}</span>
+        <span className="px-2.5 py-1 rounded-lg text-[11px] bg-white/5 text-white/60 border border-white/[0.04] capitalize">{call.direction}</span>
         <span className="px-2.5 py-1 rounded-lg text-[11px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">{call.disposition}</span>
       </div>
 
       {/* Audio Player */}
-      <div className="rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-sm p-5">
+      <div className="glass-panel p-5">
         <audio ref={audioRef} src={`${API_BASE}/calls/${callId}/recording`} preload="metadata" />
 
         <div className="flex items-center gap-4 mb-4">
@@ -391,7 +362,7 @@ export default function CallReviewPage() {
           </button>
 
           {/* Time */}
-          <span className="text-xs text-gray-400 font-mono w-12 shrink-0">{fmtTimestamp(Math.floor(currentTime))}</span>
+          <span className="text-xs text-white/40 font-mono w-12 shrink-0">{fmtTimestamp(Math.floor(currentTime))}</span>
 
           {/* Waveform / Seek */}
           <div className="flex-1 cursor-pointer" onClick={seekProgress}>
@@ -399,7 +370,7 @@ export default function CallReviewPage() {
           </div>
 
           {/* Duration */}
-          <span className="text-xs text-gray-400 font-mono w-12 shrink-0 text-right">{fmtTimestamp(Math.floor(effectiveDuration))}</span>
+          <span className="text-xs text-white/40 font-mono w-12 shrink-0 text-right">{fmtTimestamp(Math.floor(effectiveDuration))}</span>
 
           {/* Speed */}
           <div className="flex items-center gap-1 shrink-0">
@@ -408,7 +379,7 @@ export default function CallReviewPage() {
                 key={rate}
                 onClick={() => changeRate(rate)}
                 className={`px-2 py-1 rounded text-[10px] font-mono transition-colors ${
-                  playbackRate === rate ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'text-gray-500 hover:text-white hover:bg-white/5'
+                  playbackRate === rate ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'text-white/25 hover:text-white/90 hover:bg-white/5'
                 }`}
               >
                 {rate}x
@@ -419,20 +390,20 @@ export default function CallReviewPage() {
 
         {/* Sentiment Timeline */}
         <div>
-          <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1.5">Sentiment Timeline</p>
+          <p className="text-[10px] text-white/25 uppercase tracking-wider mb-1.5">Sentiment Timeline</p>
           <SentimentTimeline data={call.sentiment_timeline} />
           <div className="flex justify-between mt-1">
-            <span className="text-[9px] text-gray-600">Start</span>
-            <span className="text-[9px] text-gray-600">End</span>
+            <span className="text-[9px] text-white/15">Start</span>
+            <span className="text-[9px] text-white/15">End</span>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Left: Transcript / Highlights / Coaching (tabbed) */}
-        <div className="lg:col-span-2 rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-sm overflow-hidden">
+        <div className="lg:col-span-2 glass-panel overflow-hidden">
           {/* Tabs */}
-          <div className="flex border-b border-white/5">
+          <div className="flex border-b border-white/[0.04]">
             {([
               { key: 'transcript', label: 'Transcript', count: call.transcript.length },
               { key: 'highlights', label: 'Highlights', count: call.highlights.length },
@@ -444,11 +415,11 @@ export default function CallReviewPage() {
                 className={`flex items-center gap-2 px-5 py-3 text-sm transition-colors border-b-2 ${
                   activeTab === tab.key
                     ? 'text-blue-400 border-blue-500'
-                    : 'text-gray-500 border-transparent hover:text-gray-300'
+                    : 'text-white/25 border-transparent hover:text-white/60'
                 }`}
               >
                 {tab.label}
-                <span className="px-1.5 py-0.5 rounded text-[10px] bg-white/5">{tab.count}</span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] bg-white/[0.04]">{tab.count}</span>
               </button>
             ))}
           </div>
@@ -457,88 +428,124 @@ export default function CallReviewPage() {
           <div className="h-[500px] overflow-y-auto p-5" ref={transcriptRef}>
             {/* Transcript Tab */}
             {activeTab === 'transcript' && (
-              <div className="space-y-3">
-                {call.transcript.map((line, i) => {
-                  const isAgent = line.speaker === 'agent';
-                  const isActive = i === activeLineIdx;
-                  return (
-                    <div
-                      key={i}
-                      className={`flex gap-3 cursor-pointer rounded-lg p-2 transition-colors ${
-                        isActive ? 'bg-blue-500/10 border border-blue-500/20' : 'hover:bg-white/[0.02]'
-                      }`}
-                      onClick={() => seekTo(line.timestamp)}
-                    >
-                      <div className="shrink-0 mt-0.5">
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                          isAgent ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-500/20 text-gray-400'
-                        }`}>
-                          {isAgent ? 'AI' : line.speaker[0].toUpperCase()}
+              call.transcript.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <div className="w-12 h-12 rounded-full bg-white/[0.04] flex items-center justify-center text-white/25 mb-4">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+                    </svg>
+                  </div>
+                  <p className="text-sm text-white/40">No transcript available</p>
+                  <p className="text-xs text-white/25 mt-1">Transcript will appear after call processing completes</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {call.transcript.map((line, i) => {
+                    const isAgent = line.speaker === 'agent';
+                    const isActive = i === activeLineIdx;
+                    return (
+                      <div
+                        key={i}
+                        className={`flex gap-3 cursor-pointer rounded-lg p-2 transition-colors ${
+                          isActive ? 'bg-blue-500/10 border border-blue-500/20' : 'hover:bg-white/[0.02]'
+                        }`}
+                        onClick={() => seekTo(line.timestamp)}
+                      >
+                        <div className="shrink-0 mt-0.5">
+                          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                            isAgent ? 'bg-blue-500/20 text-blue-400' : 'bg-white/[0.04] text-white/40'
+                          }`}>
+                            {isAgent ? 'AI' : line.speaker[0].toUpperCase()}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className={`text-[11px] font-medium ${isAgent ? 'text-blue-400' : 'text-white/40'}`}>
+                              {isAgent ? 'BillyMC' : call.lead_name.split(' ')[0]}
+                            </span>
+                            <span className="text-[10px] text-white/15 font-mono">{fmtTimestamp(line.timestamp)}</span>
+                          </div>
+                          <p className="text-sm text-white/60 leading-relaxed">{line.text}</p>
                         </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className={`text-[11px] font-medium ${isAgent ? 'text-blue-400' : 'text-gray-400'}`}>
-                            {isAgent ? 'BillyMC' : call.lead_name.split(' ')[0]}
-                          </span>
-                          <span className="text-[10px] text-gray-600 font-mono">{fmtTimestamp(line.timestamp)}</span>
-                        </div>
-                        <p className="text-sm text-gray-300 leading-relaxed">{line.text}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )
             )}
 
             {/* Highlights Tab */}
             {activeTab === 'highlights' && (
-              <div className="space-y-3">
-                {call.highlights.map((h, i) => {
-                  const cfg = HIGHLIGHT_CONFIG[h.type];
-                  return (
-                    <div
-                      key={i}
-                      className={`rounded-lg border p-4 cursor-pointer hover:bg-white/[0.02] transition-colors ${cfg.border} ${cfg.bg}`}
-                      onClick={() => seekTo(h.timestamp)}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <svg className={`w-4 h-4 ${cfg.color}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d={cfg.icon} />
-                        </svg>
-                        <span className={`text-sm font-medium ${cfg.color}`}>{h.label}</span>
-                        <span className="text-[10px] text-gray-600 font-mono ml-auto">{fmtTimestamp(h.timestamp)}</span>
+              call.highlights.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <div className="w-12 h-12 rounded-full bg-white/[0.04] flex items-center justify-center text-white/25 mb-4">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                    </svg>
+                  </div>
+                  <p className="text-sm text-white/40">No highlights detected</p>
+                  <p className="text-xs text-white/25 mt-1">Key moments will be extracted by AI after the call</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {call.highlights.map((h, i) => {
+                    const cfg = HIGHLIGHT_CONFIG[h.type];
+                    return (
+                      <div
+                        key={i}
+                        className={`rounded-lg border p-4 cursor-pointer hover:bg-white/[0.02] transition-colors ${cfg.border} ${cfg.bg}`}
+                        onClick={() => seekTo(h.timestamp)}
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <svg className={`w-4 h-4 ${cfg.color}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d={cfg.icon} />
+                          </svg>
+                          <span className={`text-sm font-medium ${cfg.color}`}>{h.label}</span>
+                          <span className="text-[10px] text-white/15 font-mono ml-auto">{fmtTimestamp(h.timestamp)}</span>
+                        </div>
+                        <p className="text-sm text-white/60 leading-relaxed">{h.detail}</p>
                       </div>
-                      <p className="text-sm text-gray-300 leading-relaxed">{h.detail}</p>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )
             )}
 
             {/* Coaching Tab */}
             {activeTab === 'coaching' && (
-              <div className="space-y-3">
-                {call.coaching_notes.map((note, i) => {
-                  const categoryConfig: Record<CoachingNote['category'], { icon: string; color: string; label: string }> = {
-                    positive: { icon: 'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-emerald-400', label: 'Strength' },
-                    improvement: { icon: 'M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z', color: 'text-amber-400', label: 'Improve' },
-                    technique: { icon: 'M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z', color: 'text-blue-400', label: 'Technique' },
-                  };
-                  const nc = categoryConfig[note.category];
-                  return (
-                    <div key={i} className="flex gap-3 p-3 rounded-lg bg-white/[0.02] border border-white/5">
-                      <svg className={`w-5 h-5 shrink-0 mt-0.5 ${nc.color}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d={nc.icon} />
-                      </svg>
-                      <div>
-                        <span className={`text-[10px] uppercase tracking-wider font-medium ${nc.color}`}>{nc.label}</span>
-                        <p className="text-sm text-gray-300 mt-1 leading-relaxed">{note.text}</p>
+              call.coaching_notes.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <div className="w-12 h-12 rounded-full bg-white/[0.04] flex items-center justify-center text-white/25 mb-4">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                    </svg>
+                  </div>
+                  <p className="text-sm text-white/40">No coaching notes yet</p>
+                  <p className="text-xs text-white/25 mt-1">AI coaching insights will appear after analysis</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {call.coaching_notes.map((note, i) => {
+                    const categoryConfig: Record<CoachingNote['category'], { icon: string; color: string; label: string }> = {
+                      positive: { icon: 'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-emerald-400', label: 'Strength' },
+                      improvement: { icon: 'M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z', color: 'text-amber-400', label: 'Improve' },
+                      technique: { icon: 'M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z', color: 'text-blue-400', label: 'Technique' },
+                    };
+                    const nc = categoryConfig[note.category];
+                    return (
+                      <div key={i} className="flex gap-3 p-3 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                        <svg className={`w-5 h-5 shrink-0 mt-0.5 ${nc.color}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d={nc.icon} />
+                        </svg>
+                        <div>
+                          <span className={`text-[10px] uppercase tracking-wider font-medium ${nc.color}`}>{nc.label}</span>
+                          <p className="text-sm text-white/60 mt-1 leading-relaxed">{note.text}</p>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )
             )}
           </div>
         </div>
@@ -546,14 +553,14 @@ export default function CallReviewPage() {
         {/* Right: Summary + Costs */}
         <div className="space-y-5">
           {/* Summary */}
-          <div className="rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-sm p-5">
-            <h3 className="text-sm font-medium text-white mb-3">AI Summary</h3>
-            <p className="text-sm text-gray-300 leading-relaxed">{call.transcript_summary}</p>
+          <div className="glass-panel p-5">
+            <h3 className="text-sm font-medium text-white/90 tracking-tight mb-3">AI Summary</h3>
+            <p className="text-sm text-white/60 leading-relaxed">{call.transcript_summary || 'No summary available yet.'}</p>
           </div>
 
           {/* Sentiment */}
-          <div className="rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-sm p-5">
-            <h3 className="text-sm font-medium text-white mb-3">Overall Sentiment</h3>
+          <div className="glass-panel p-5">
+            <h3 className="text-sm font-medium text-white/90 tracking-tight mb-3">Overall Sentiment</h3>
             <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border ${sent.bg} ${sent.border}`}>
               <span className={`w-2 h-2 rounded-full ${
                 call.sentiment_overall === 'positive' ? 'bg-emerald-400' :
@@ -564,8 +571,8 @@ export default function CallReviewPage() {
           </div>
 
           {/* Cost Breakdown */}
-          <div className="rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-sm p-5">
-            <h3 className="text-sm font-medium text-white mb-3">Cost Breakdown</h3>
+          <div className="glass-panel p-5">
+            <h3 className="text-sm font-medium text-white/90 tracking-tight mb-3">Cost Breakdown</h3>
             <div className="space-y-2.5">
               {[
                 { label: 'Twilio (telephony)', cost: call.cost_breakdown.twilio, color: '#3B82F6' },
@@ -576,21 +583,21 @@ export default function CallReviewPage() {
                 <div key={item.label} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span className="text-xs text-gray-400">{item.label}</span>
+                    <span className="text-xs text-white/40">{item.label}</span>
                   </div>
-                  <span className="text-xs text-gray-300 font-mono">${item.cost.toFixed(3)}</span>
+                  <span className="text-xs text-white/60 font-mono">${item.cost.toFixed(3)}</span>
                 </div>
               ))}
-              <div className="pt-2.5 mt-2.5 border-t border-white/5 flex items-center justify-between">
-                <span className="text-xs text-white font-medium">Total</span>
-                <span className="text-sm text-white font-bold font-mono">${call.cost_breakdown.total.toFixed(2)}</span>
+              <div className="pt-2.5 mt-2.5 border-t border-white/[0.04] flex items-center justify-between">
+                <span className="text-xs text-white/90 font-medium">Total</span>
+                <span className="text-sm text-white/90 font-bold font-mono">${call.cost_breakdown.total.toFixed(2)}</span>
               </div>
             </div>
           </div>
 
           {/* Call Meta */}
-          <div className="rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-sm p-5">
-            <h3 className="text-sm font-medium text-white mb-3">Call Details</h3>
+          <div className="glass-panel p-5">
+            <h3 className="text-sm font-medium text-white/90 tracking-tight mb-3">Call Details</h3>
             <div className="space-y-2">
               {[
                 { label: 'Call ID', value: call.id },
@@ -600,8 +607,8 @@ export default function CallReviewPage() {
                 { label: 'Email', value: call.lead_email || '--' },
               ].map((row) => (
                 <div key={row.label} className="flex justify-between">
-                  <span className="text-[11px] text-gray-500">{row.label}</span>
-                  <span className="text-[11px] text-gray-300 font-mono">{row.value}</span>
+                  <span className="text-[11px] text-white/25">{row.label}</span>
+                  <span className="text-[11px] text-white/60 font-mono">{row.value}</span>
                 </div>
               ))}
             </div>
