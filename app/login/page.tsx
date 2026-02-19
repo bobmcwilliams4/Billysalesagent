@@ -1,61 +1,108 @@
 'use client';
 import { useState } from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { initializeApp, getApps } from 'firebase/app';
 
 const firebaseConfig = { apiKey: "AIzaSyCuTHwqo6HPjR0oSlCnWBkRslXTZg41VWY", authDomain: "echo-prime-ai.firebaseapp.com", projectId: "echo-prime-ai", storageBucket: "echo-prime-ai.firebasestorage.app", messagingSenderId: "249995513427", appId: "1:249995513427:web:968e587d91e887a3b140a6" };
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const auth = getAuth(app);
 
+const API_BASE = 'https://billymc-api.bmcii1976.workers.dev';
+
 export default function LoginPage() {
   const router = useRouter();
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [industry, setIndustry] = useState('insurance');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const handleGoogleSignIn = async () => {
+  // After Firebase auth, check if tenant exists — if not and signing up, provision one
+  const ensureTenant = async (firebaseUser: any) => {
+    const token = await firebaseUser.getIdToken();
+
+    // Check if user already has a tenant
+    const meRes = await fetch(`${API_BASE}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const meData = await meRes.json();
+
+    if (meData.status === 'active') {
+      // Already provisioned
+      return true;
+    }
+
+    if (mode === 'signup' || meData.status === 'no_tenant') {
+      // Provision new tenant
+      const signupRes = await fetch(`${API_BASE}/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firebase_token: token,
+          company_name: companyName || firebaseUser.displayName || firebaseUser.email.split('@')[0],
+          owner_name: fullName || firebaseUser.displayName || firebaseUser.email.split('@')[0],
+          industry,
+        }),
+      });
+
+      if (!signupRes.ok) {
+        const err = await signupRes.json();
+        throw new Error(err.error || 'Failed to create account');
+      }
+    }
+
+    return true;
+  };
+
+  const handleGoogleAuth = async () => {
     setError('');
     setGoogleLoading(true);
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      await ensureTenant(result.user);
       router.push('/');
     } catch (err: any) {
-      if (err.code === 'auth/popup-closed-by-user') {
-        // User closed popup, not an error to show
-      } else if (err.code === 'auth/cancelled-popup-request') {
-        // Multiple popups, ignore
-      } else {
+      if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
         setError(err.message || 'Google sign-in failed');
       }
     }
     setGoogleLoading(false);
   };
 
-  const handleEmailSignIn = async (e: React.FormEvent) => {
+  const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password.trim()) {
-      setError('Email and password are required');
-      return;
-    }
+    if (!email.trim() || !password.trim()) { setError('Email and password are required'); return; }
+    if (mode === 'signup' && !companyName.trim()) { setError('Company name is required'); return; }
     setError('');
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      let userCred;
+      if (mode === 'signup') {
+        userCred = await createUserWithEmailAndPassword(auth, email, password);
+      } else {
+        userCred = await signInWithEmailAndPassword(auth, email, password);
+      }
+      await ensureTenant(userCred.user);
       router.push('/');
     } catch (err: any) {
       if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         setError('Invalid email or password');
+      } else if (err.code === 'auth/email-already-in-use') {
+        setError('An account with this email already exists. Try signing in.');
+      } else if (err.code === 'auth/weak-password') {
+        setError('Password must be at least 6 characters');
       } else if (err.code === 'auth/invalid-email') {
         setError('Invalid email address');
       } else if (err.code === 'auth/too-many-requests') {
         setError('Too many attempts. Try again later.');
       } else {
-        setError(err.message || 'Sign-in failed');
+        setError(err.message || 'Authentication failed');
       }
     }
     setLoading(false);
@@ -63,30 +110,27 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-surface-0 relative overflow-hidden">
-      {/* Background decorative elements */}
+      {/* Background */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-blue-500/[0.04] blur-[120px]" />
         <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-purple-500/[0.04] blur-[100px]" />
       </div>
 
-      {/* Login Card */}
+      {/* Auth Card */}
       <div className="glass-panel-elevated w-full max-w-md mx-4 p-8 animate-scaleIn relative z-10">
         {/* Logo + Title */}
         <div className="flex flex-col items-center mb-8">
-          <Image
-            src="/ept-logo.png"
-            alt="Echo Prime Technologies"
-            width={56}
-            height={56}
-            className="rounded-xl mb-4 shadow-lg"
-          />
-          <h1 className="font-orbitron text-2xl text-[--text-100] tracking-wider">BillyMC</h1>
-          <p className="text-sm text-[--text-48] mt-1">AI Sales Platform</p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/ept-logo-dark.png" alt="Echo Prime Technologies" style={{ height: '48px', width: 'auto' }} className="mb-4" />
+          <h1 className="font-orbitron text-xl text-[--text-100] tracking-wider">
+            {mode === 'signup' ? 'Create Account' : 'Sign In'}
+          </h1>
+          <p className="text-sm text-[--text-48] mt-1">AI-Powered Sales Agent Platform</p>
         </div>
 
-        {/* Google Sign-In */}
+        {/* Google Auth */}
         <button
-          onClick={handleGoogleSignIn}
+          onClick={handleGoogleAuth}
           disabled={googleLoading}
           className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-[--border-interactive] bg-[--glass-bg] hover:bg-[--glass-bg-hover] text-[--text-100] text-sm font-medium transition-all duration-150 disabled:opacity-50 mb-6"
         >
@@ -100,7 +144,7 @@ export default function LoginPage() {
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
             </svg>
           )}
-          {googleLoading ? 'Signing in...' : 'Sign in with Google'}
+          {googleLoading ? 'Connecting...' : `Continue with Google`}
         </button>
 
         {/* Divider */}
@@ -110,53 +154,78 @@ export default function LoginPage() {
           <div className="flex-1 h-px bg-[--border-base]" />
         </div>
 
-        {/* Email/Password Form */}
-        <form onSubmit={handleEmailSignIn} className="space-y-4">
+        {/* Email Form */}
+        <form onSubmit={handleEmailAuth} className="space-y-4">
+          {mode === 'signup' && (
+            <>
+              <div>
+                <label className="text-xs text-[--text-48] mb-1.5 block">Company Name</label>
+                <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="Acme Insurance" className="input-glass w-full px-4 py-2.5" />
+              </div>
+              <div>
+                <label className="text-xs text-[--text-48] mb-1.5 block">Your Name</label>
+                <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="John Smith" className="input-glass w-full px-4 py-2.5" />
+              </div>
+              <div>
+                <label className="text-xs text-[--text-48] mb-1.5 block">Industry</label>
+                <select value={industry} onChange={e => setIndustry(e.target.value)} className="input-glass w-full px-4 py-2.5">
+                  <option value="insurance">Insurance</option>
+                  <option value="real_estate">Real Estate</option>
+                  <option value="financial_services">Financial Services</option>
+                  <option value="home_services">Home Services</option>
+                  <option value="automotive">Automotive</option>
+                  <option value="healthcare">Healthcare</option>
+                  <option value="solar">Solar / Energy</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </>
+          )}
           <div>
             <label className="text-xs text-[--text-48] mb-1.5 block">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="you@company.com"
-              className="input-glass w-full px-4 py-2.5"
-              autoComplete="email"
-            />
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@company.com" className="input-glass w-full px-4 py-2.5" autoComplete="email" />
           </div>
           <div>
             <label className="text-xs text-[--text-48] mb-1.5 block">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              className="input-glass w-full px-4 py-2.5"
-              autoComplete="current-password"
-            />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder={mode === 'signup' ? 'Create a password (6+ chars)' : 'Enter your password'} className="input-glass w-full px-4 py-2.5" autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} />
           </div>
 
-          {/* Error */}
           {error && (
             <div className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-2.5 text-sm text-red-400 animate-fadeIn">
               {error}
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary w-full py-3 disabled:opacity-50 disabled:transform-none"
-          >
+          <button type="submit" disabled={loading} className="btn-primary w-full py-3 disabled:opacity-50 disabled:transform-none">
             {loading ? (
               <span className="flex items-center justify-center gap-2">
                 <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                Signing in...
+                {mode === 'signup' ? 'Creating account...' : 'Signing in...'}
               </span>
             ) : (
-              'Sign In'
+              mode === 'signup' ? 'Create Account' : 'Sign In'
             )}
           </button>
         </form>
+
+        {/* Toggle sign in / sign up */}
+        <div className="mt-6 text-center">
+          {mode === 'signin' ? (
+            <p className="text-sm text-[--text-48]">
+              New here?{' '}
+              <button onClick={() => { setMode('signup'); setError(''); }} className="text-blue-400 hover:text-blue-300 font-medium">
+                Create an account
+              </button>
+            </p>
+          ) : (
+            <p className="text-sm text-[--text-48]">
+              Already have an account?{' '}
+              <button onClick={() => { setMode('signin'); setError(''); }} className="text-blue-400 hover:text-blue-300 font-medium">
+                Sign in
+              </button>
+            </p>
+          )}
+        </div>
 
         {/* Footer */}
         <div className="mt-8 pt-6 border-t border-[--border-base] text-center">
